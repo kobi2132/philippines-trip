@@ -34,6 +34,21 @@
     </div>`;
   };
 
+  // Live status of each leg, shown above the (collapsed) flight card once there is any.
+  const flightLive = (f) => {
+    const rows = f.legs.map((leg) => {
+      const s = App.legStatus(leg);
+      if (!s) return '';
+      const st = STATUS[s.status] || { label: s.status, cls: 'ok', icon: 'ℹ️' };
+      const changed = s.depLocal && s.depLocal !== App.localTime(leg.dep);
+      return `<div class="status status-${st.cls} status-live">
+        <span>${st.icon} <bdi>${esc(leg.flightNo)}</bdi> ${esc(st.label)}${changed ? ` · המראה <b>${esc(s.depLocal)}</b> <s>${App.localTime(leg.dep)}</s>` : ''}${s.gate ? ` · שער <b>${esc(s.gate)}</b>` : ''}</span>
+        ${s.updatedAt ? `<small>${minutesAgo(s.updatedAt)}</small>` : ''}
+      </div>`;
+    }).join('');
+    return rows ? `<div class="live-wrap">${rows}</div>` : '';
+  };
+
   const airportLine = (ap, label) => `
     <div class="ap">
       <div class="ap-code">${esc(ap.code)}</div>
@@ -61,8 +76,8 @@
       </div>
       <div class="facts">
         <div class="fact"><span>🚪 שער</span><b>${s.gate ? esc(s.gate) : 'יפורסם בשדה'}</b></div>
-        <div class="fact"><span>🎫 בורדינג</span><b>${s.boarding ? esc(s.boarding) : App.minusMinutes(App.localTime(leg.dep), 45) + ' בערך'}</b></div>
-        <div class="fact"><span>🔒 נסגר</span><b>${App.minusMinutes(App.localTime(leg.dep), 20)} בערך</b></div>
+        <div class="fact"><span>🎫 בורדינג</span><b>${s.boarding ? esc(s.boarding) : App.minusMinutes(s.depLocal || App.localTime(leg.dep), 45) + ' בערך'}</b></div>
+        <div class="fact"><span>🔒 נסגר</span><b>${App.minusMinutes(s.depLocal || App.localTime(leg.dep), 20)} בערך</b></div>
       </div>
       <a class="link-small" href="https://www.flightradar24.com/data/flights/${esc(leg.flightNo.toLowerCase())}" target="_blank" rel="noopener">📡 מעקב חי אחרי הטיסה</a>
     </div>`;
@@ -247,7 +262,7 @@
     const pre = transfers.filter((t) => t.navTo && !t.toHotel);
     const post = transfers.filter((t) => !(t.navTo && !t.toHotel));
     pre.forEach((t) => { html += transferFold(t); });
-    flights.forEach((f) => { html += flightGuide(f) + fold('day', f.id, false, flightSummary(f), flightCard(f)); });
+    flights.forEach((f) => { html += flightGuide(f) + flightLive(f) + fold('day', f.id, false, flightSummary(f), flightCard(f)); });
     post.forEach((t) => { html += transferFold(t); });
     if (tonight) {
       const mode = tonight.checkIn === date ? 'checkin' : 'tonight';
@@ -348,12 +363,11 @@
   const flightSummary = (f) => {
     const first = f.legs[0], last = f.legs[f.legs.length - 1];
     const nextDay = App.localDate(last.arr) !== App.localDate(first.dep);
-    const problem = f.legs.map(App.legStatus).find((s) => s && (s.status === 'delayed' || s.status === 'cancelled'));
     return `<div class="card-title"><span class="ico ico-blue">✈️</span><h3>${esc(f.title)}</h3></div>
       <div class="fold-line"><span>📅 ${App.weekday(f.date)} <bdi>${App.shortDate(f.date)}</bdi></span>
         <span>🛫 <b>${App.localTime(first.dep)}</b></span>
         <span>🛬 <b>${App.localTime(last.arr)}</b>${nextDay ? '<sup>+1</sup>' : ''}</span></div>
-      ${problem ? `<div class="fold-alert">${problem.status === 'cancelled' ? '❌ בוטלה' : '⏰ יש עיכוב'}, פתחו לפרטים</div>` : ''}`;
+`;
   };
 
   const hotelSummary = (h) => {
@@ -371,7 +385,7 @@
         return `
         <div class="list-date ${isNext ? 'is-next' : ''} ${App.localDate(f.legs[f.legs.length - 1].arr) < App.today() ? 'is-past' : ''}">
           ${isNext ? '<span class="tag">הטיסה הבאה</span>' : ''}
-          ${fold('flights', f.id, false, flightSummary(f), flightCard(f, { showAirportBy: true }))}
+          ${flightLive(f)}${fold('flights', f.id, false, flightSummary(f), flightCard(f, { showAirportBy: true }))}
         </div>`;
       }).join('')}`;
   };

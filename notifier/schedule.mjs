@@ -80,21 +80,41 @@ export function dueReminders(trip, now, sent = {}) {
   });
 }
 
-// Legs to poll now. Near departure (6h before until 1h after landing) every 25 min; a day out, every 6h.
-export function legsToCheck(trip, now, lastChecked = {}) {
+// How often to check a leg right now (ms), or null when it needs no check.
+// Every 12h from 5 days out; every 3h in the last day; every 20 min from 4h before take-off
+// (longer while a delayed flight hasn't left yet) and around landing until it has landed.
+const H = 3600e3, M = 60e3;
+export function pollEvery(leg, t, last) {
+  const status = last && last.status;
+  if (status === 'landed' || status === 'cancelled') return null;
+  const dep = new Date(leg.dep).getTime(), arr = new Date(leg.arr).getTime();
+  const airborne = status === 'departed';
+  if (t >= arr - 30 * M && t <= arr + 3 * H) return 20 * M;
+  if (!airborne && t >= dep - 4 * H && t <= dep + 6 * H) return 20 * M;
+  if (t >= dep - 24 * H && t < dep - 4 * H) return 3 * H;
+  if (t >= dep - 5 * 24 * H && t < dep - 24 * H) return 12 * H;
+  return null;
+}
+
+// Legs due for a check now. A minute of slack so a 5-minute schedule lands on every 20 minutes.
+export function legsToCheck(trip, now, lastChecked = {}, notified = {}) {
   const t = now.getTime();
   const res = [];
   for (const f of trip.flights) {
     for (const leg of f.legs) {
-      const dep = new Date(leg.dep).getTime(), arr = new Date(leg.arr).getTime();
       const key = `${leg.flightNo}_${leg.dep.slice(0, 10)}`;
-      const since = t - (lastChecked[key] || 0);
-      const near = t >= dep - 6 * 3600e3 && t <= arr + 3600e3;
-      const dayOut = t >= dep - 24 * 3600e3 && t < dep - 6 * 3600e3;
-      if ((near && since >= 25 * 60e3) || (dayOut && since >= 6 * 3600e3)) res.push({ key, leg });
+      const every = pollEvery(leg, t, notified[key]);
+      if (every && t - (lastChecked[key] || 0) >= every - M) res.push({ key, leg });
     }
   }
   return res;
+}
+
+// Landed: a note for Jacob so he can check in with them.
+export function landedAlert(leg, prev, next) {
+  if (!next || next.status !== 'landed' || (prev && prev.status === 'landed')) return null;
+  const to = leg.to.city || leg.to.code;
+  return `🛬 <b>טיסה ${leg.flightNo} נחתה</b> ב${to}${next.arrLocal ? ` ב-${next.arrLocal}` : ''}. זה זמן טוב לשלוח להם הודעה.`;
 }
 
 // Compare a leg's new status with what we last told them; return a push or null.
@@ -113,5 +133,44 @@ export function flightChangeAlert(leg, prev, next) {
   }
   return null;
 }
+
+// Online check-in sites, by the airline code of the booking's first flight.
+export const CHECKIN = {
+  FZ: 'https://www.flydubai.com/en/flying-with-us/check-in/online-check-in/',
+  PR: 'https://www.philippineairlines.com/ph/en/check-in-online.html',
+  '5J': 'https://book.cebupacificair.com/Checkin/Retrieve',
+  DG: 'https://book.cebupacificair.com/Checkin/Retrieve',
+};
+
+const route = (f) => `${f.legs[0].from.city || f.legs[0].from.code} ← ${f.legs[f.legs.length - 1].to.city || f.legs[f.legs.length - 1].to.code}`;
+
+// Messages for Jacob on Telegram: { key, at (Date), text }.
+// 24h before each flight: check-in with the link and booking code. Flight day morning: when to be at the airport.
+export function telegramReminders(trip) {
+  const out = [];
+  for (const f of trip.flights) {
+    const first = f.legs[0];
+    const dep = new Date(first.dep);
+    const link = CHECKIN[first.flightNo.slice(0, 2)];
+    out.push({ key: `tg_checkin_${f.date}_${first.flightNo}`, at: new Date(dep.getTime() - 24 * 3600e3),
+      text: `✅ <b>צ'ק אין פתוח</b> לטיסה של ${trip.travelers}\n${route(f)} · ${first.flightNo} · ${shortDate(f.date)} ב-${localTime(first.dep)}\nמספר הזמנה: <code>${f.booking}</code>${link ? `\n${link}` : ''}` });
+    const tz = tzOfDeparture(f);
+    const morning = plannedReminders(trip).find((r) => r.key === `morning_${f.date}`);
+    if (morning) {
+      out.push({ key: `tg_day_${f.date}`, at: zonedTime(morning.date, morning.time, tz),
+        text: `✈️ <b>היום טסים</b>: ${route(f)}\n${first.flightNo} ב-${localTime(first.dep)}. להיות בשדה עד <b>${airportBy(f)}</b>. הזמנה <code>${f.booking}</code>` });
+    }
+  }
+  return out;
+}
+
+// Due now: its time has passed, within a 4-hour grace window, not yet sent.
+export function dueTelegram(trip, now, sent = {}) {
+  return telegramReminders(trip).filter((r) => !sent[r.key] && now >= r.at && now - r.at < 4 * 3600e3);
+}
+
+// A wall-clock time in a zone as a Date (the trip's zones have no DST in November).
+const OFFSET = { 'Asia/Jerusalem': '+02:00', 'Asia/Manila': '+08:00' };
+const zonedTime = (date, hm, tz) => new Date(`${date}T${hm}:00${OFFSET[tz] || '+00:00'}`);
 
 export const _test = { toMin, fromMin, addDays, shortDate };
