@@ -280,21 +280,56 @@
     return App.installCard(true) + pushCard(true) + dayView(App.today());
   };
 
+  // Collapsed card for the flights / hotels lists: a short summary that opens to the full card.
+  // Only one card per list is open at a time (main.js closes the others); the one the user
+  // opened last is remembered across re-renders, otherwise `openByDefault` is open.
+  App.openFold = App.openFold || {};
+  const fold = (group, id, openByDefault, summary, full, style = '') => {
+    const open = group in App.openFold ? App.openFold[group] === id : openByDefault;
+    return `<details class="card fold" data-fold="${group}" data-id="${esc(id)}" ${open ? 'open' : ''} ${style}>
+      <summary>${summary}<span class="fold-btn"></span></summary>
+      ${full}
+    </details>`;
+  };
+
+  const flightSummary = (f) => {
+    const first = f.legs[0], last = f.legs[f.legs.length - 1];
+    const nextDay = App.localDate(last.arr) !== App.localDate(first.dep);
+    const problem = f.legs.map(App.legStatus).find((s) => s && (s.status === 'delayed' || s.status === 'cancelled'));
+    return `<div class="card-title"><span class="ico ico-blue">✈️</span><h3>${esc(f.title)}</h3></div>
+      <div class="fold-line"><span>📅 ${App.weekday(f.date)} <bdi>${App.shortDate(f.date)}</bdi></span>
+        <span>🛫 <b>${App.localTime(first.dep)}</b></span>
+        <span>🛬 <b>${App.localTime(last.arr)}</b>${nextDay ? '<sup>+1</sup>' : ''}</span></div>
+      ${problem ? `<div class="fold-alert">${problem.status === 'cancelled' ? '❌ בוטלה' : '⏰ יש עיכוב'}, פתחו לפרטים</div>` : ''}`;
+  };
+
+  const hotelSummary = (h) => {
+    const nights = App.daysBetween(h.checkIn, h.checkOut);
+    return `<div class="card-title"><span class="ico ico-orange">🏨</span><h3>${esc(h.name)}</h3></div>
+      <div class="fold-line"><span>📍 ${esc(h.city)}</span><span>📅 ${App.range(h.checkIn, h.checkOut)}</span>
+        <span>🌙 ${nights} ${nights === 1 ? 'לילה' : 'לילות'}</span></div>`;
+  };
+
   const flightsView = () => {
     const next = App.nextFlight();
     return `<h1 class="page-h">✈️ טיסות</h1>
-      ${App.trip.flights.map((f) => `
-        <div class="list-date ${next && next.id === f.id ? 'is-next' : ''} ${App.localDate(f.legs[f.legs.length - 1].arr) < App.today() ? 'is-past' : ''}">
-          ${next && next.id === f.id ? '<span class="tag">הטיסה הבאה</span>' : ''}
-          <div class="list-date-h">${App.longDate(f.date)}</div>
-          ${flightCard(f, { showAirportBy: true })}
-        </div>`).join('')}`;
+      ${App.trip.flights.map((f) => {
+        const isNext = next && next.id === f.id;
+        return `
+        <div class="list-date ${isNext ? 'is-next' : ''} ${App.localDate(f.legs[f.legs.length - 1].arr) < App.today() ? 'is-past' : ''}">
+          ${isNext ? '<span class="tag">הטיסה הבאה</span>' : ''}
+          ${fold('flights', f.id, isNext, flightSummary(f), flightCard(f, { showAirportBy: true }))}
+        </div>`;
+      }).join('')}`;
   };
 
   const hotelsView = () => {
     const tonight = App.hotelForNight(App.today());
+    // Default open: tonight's hotel, or the next one before the trip.
+    const current = tonight || App.trip.hotels.find((h) => h.checkOut >= App.today());
     return `<h1 class="page-h">🏨 מלונות</h1>
-      ${App.trip.hotels.map((h) => `<div class="${h.checkOut < App.today() ? 'is-past' : ''}">${hotelCard(h, tonight && tonight.id === h.id ? 'tonight' : '')}</div>`).join('')}
+      ${App.trip.hotels.map((h) => `<div class="${h.checkOut < App.today() ? 'is-past' : ''}">${fold('hotels', h.id, current && current.id === h.id,
+        hotelSummary(h), hotelCard(h, tonight && tonight.id === h.id ? 'tonight' : ''), `style="--accent:${App.place(h.place).color}"`)}</div>`).join('')}
       ${App.trip.hotelDefaults.timesEstimated ? '<p class="muted center">שעות צ\'ק אין ואאוט הן השעות המקובלות ויעודכנו לפי המלון.</p>' : ''}`;
   };
 

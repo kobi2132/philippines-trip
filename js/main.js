@@ -35,6 +35,20 @@
   };
   window.addEventListener('scroll', onScroll, { passive: true });
 
+  // Flights / hotels lists: opening one card closes the others in the same list.
+  document.addEventListener('toggle', (e) => {
+    const d = e.target;
+    if (!d.matches || !d.matches('details[data-fold]')) return;
+    const group = d.dataset.fold;
+    if (d.open) {
+      App.openFold[group] = d.dataset.id;
+      document.querySelectorAll(`details[data-fold="${group}"][open]`).forEach((o) => { if (o !== d) o.open = false; });
+      setTimeout(() => d.scrollIntoView({ behavior: 'smooth', block: 'nearest' }), 50);
+    } else if (App.openFold[group] === d.dataset.id) {
+      App.openFold[group] = null;
+    }
+  }, true);
+
   // ---------- full-screen states (before the trip data is available) ----------
 
   const SCREENS = {
@@ -181,8 +195,8 @@
     } else if (t.hasAttribute('data-close')) {
       if (e.target === t || t.tagName === 'BUTTON') document.querySelector('.modal')?.remove();
     } else if (t.dataset.font) {
-      const size = Math.min(26, Math.max(16, (App.store.get('font', 19)) + Number(t.dataset.font) * 2));
-      App.store.set('font', size); document.documentElement.style.fontSize = size + 'px';
+      const size = Math.min(24, Math.max(14, (App.store.get('font2', 16)) + Number(t.dataset.font) * 2));
+      App.store.set('font2', size); document.documentElement.style.fontSize = size + 'px';
     } else if (t.hasAttribute('data-signin')) {
       try { await App.backend.signIn(); } catch (err) { document.getElementById('login-err').textContent = 'הכניסה לא הצליחה, נסו שוב (' + err.code + ')'; }
     } else if (t.hasAttribute('data-signout')) {
@@ -259,7 +273,7 @@
 
   // ---------- boot ----------
 
-  document.documentElement.style.fontSize = App.store.get('font', 19) + 'px';
+  document.documentElement.style.fontSize = App.store.get('font2', 16) + 'px';
   if ('serviceWorker' in navigator && location.protocol === 'https:' && !window.TRIP_DATA) {
     navigator.serviceWorker.register('sw.js').catch(() => {});
   }
