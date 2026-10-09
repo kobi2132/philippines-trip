@@ -213,3 +213,10 @@ small { font-size: .78rem; }
 .push-card p { margin: 0 0 4px; font-weight: 500; }
 .push-card .btn { margin-top: 6px; }
 .diag { display: block; margin-top: 10px; font-size: 12px; color: #64748b; word-break: break-all; text-align: left; }
+.push-card { position: relative; }
+.card-x { position: absolute; top: 6px; left: 8px; background: none; border: 0; font-size: 1.1rem; color: var(--muted); padding: 8px; cursor: pointer; }
+.push-card p { padding-left: 28px; }
+.install-card { background: #ecfeff; }
+.install-help { text-align: right; direction: rtl; }
+.install-help ol { padding-right: 22px; margin: 12px 0; line-height: 1.6; }
+.install-help li { margin-bottom: 10px; }
