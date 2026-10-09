@@ -188,7 +188,9 @@
     return `
     <nav class="day-nav">
       <a class="arrow ${prev ? '' : 'off'}" href="${prev ? '#/day/' + prev : '#'}" aria-label="יום קודם">→</a>
-      <a class="today-btn" href="#/today">היום</a>
+      ${date === App.today()
+        ? '<span class="today-btn is-today">📍 היום</span>'
+        : '<a class="today-btn" href="#/today">↩️ חזרה להיום</a>'}
       <a class="arrow ${next ? '' : 'off'}" href="${next ? '#/day/' + next : '#'}" aria-label="יום הבא">←</a>
     </nav>`;
   };
