@@ -1,5 +1,5 @@
 // Offline support: app files are cached; bump VERSION to ship an update.
-const VERSION = 'v5';
+const VERSION = 'v6';
 const FILES = [
   './', 'index.html', 'manifest.webmanifest', 'css/app.css',
   'js/config.js', 'js/util.js', 'js/trip.js', 'js/map.js', 'js/views.js', 'js/backend.js', 'js/main.js',
@@ -7,7 +7,7 @@ const FILES = [
 ];
 
 self.addEventListener('install', (e) => {
-  e.waitUntil(caches.open(VERSION).then((c) => c.addAll(FILES)).then(() => self.skipWaiting()));
+  e.waitUntil(caches.open(VERSION).then((c) => c.addAll(FILES.map((f) => new Request(f, { cache: 'reload' })))).then(() => self.skipWaiting()));
 });
 
 self.addEventListener('activate', (e) => {
@@ -22,7 +22,8 @@ self.addEventListener('fetch', (e) => {
   const cacheable = url.origin === location.origin || url.host.endsWith('gstatic.com') || url.host === 'fonts.googleapis.com';
   if (!cacheable || url.pathname.includes('/google.firestore')) return;
   e.respondWith(
-    fetch(e.request).then((res) => {
+    // Own files skip the browser's HTTP cache (GitHub Pages keeps them 10 minutes), so updates arrive at once.
+    (url.origin === location.origin ? fetch(new Request(e.request, { cache: 'no-cache' })) : fetch(e.request)).then((res) => {
       if (res.ok || res.type === 'opaque') { const copy = res.clone(); caches.open(VERSION).then((c) => c.put(e.request, copy)); }
       return res;
     }).catch(() => caches.match(e.request, { ignoreSearch: url.origin === location.origin }))
