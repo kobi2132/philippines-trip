@@ -118,17 +118,17 @@
     </section>`;
   };
 
-  const hotelCard = (h, mode) => {
+  const hotelCard = (h, mode, opts = {}) => {
     const p = App.place(h.place);
     const tm = App.hotelTimes(h);
     const nights = App.daysBetween(h.checkIn, h.checkOut);
-    const banner = mode === 'checkout'
+    const banner = opts.noBanner ? '' : mode === 'checkout'
       ? `<div class="big-callout warn">🧳 צ'ק אאוט היום עד <b>${tm.checkOutTime}</b> ${estimatedMark(tm.estimated)}</div>`
       : mode === 'checkin' ? `<div class="big-callout">🛎️ צ'ק אין מ-<b>${tm.checkInTime}</b> ${estimatedMark(tm.estimated)}</div>` : '';
     return `
     <section class="card card-hotel" style="--accent:${p.color}">
       <div class="card-title"><span class="ico ico-orange">🏨</span><h3>${esc(h.name)}</h3></div>
-      ${mode === 'tonight' ? '<div class="tag">🌙 כאן ישנים הלילה</div>' : ''}
+      ${mode === 'tonight' && !opts.noBanner ? '<div class="tag">🌙 כאן ישנים הלילה</div>' : ''}
       ${banner}
       <p class="muted">📍 ${esc(h.city)} · ${esc(h.address)}</p>
       <div class="facts">
@@ -159,6 +159,7 @@
       </div>
       ${a.agentNote ? `<p class="agent">💬 עדי: "${esc(a.agentNote)}"</p>` : ''}
       ${compact ? `<a class="link-small" href="#/attractions/${a.place}">לפרטים ←</a>` : `
+        ${a.address || a.mapQuery ? `<p class="muted">📍 <bdi>${esc(a.address || a.mapQuery)}</bdi></p>` : ''}
         ${App.navButtons(a.mapQuery)}
         ${App.canEdit() ? `<button class="btn btn-done" data-done="${a.id}">${done ? '✅ עשינו!' : '☐ סמנו שעשינו'}</button>` : ''}`}
     </section>`;
@@ -234,13 +235,17 @@
     if (info.prep) return html + eveContent();
 
     // Order: leave hotel → get to airport → fly → transfers → tonight's hotel → things to do
-    if (out && (!tonight || out.id !== tonight.id)) html += hotelCard(out, 'checkout');
+    // Flights and hotels are collapsed; what to do about them today sits above, as a guide line.
+    if (out && (!tonight || out.id !== tonight.id)) html += hotelGuide(out, 'checkout') + hotelFold(out, 'checkout');
     const pre = transfers.filter((t) => t.navTo && !t.toHotel);
     const post = transfers.filter((t) => !(t.navTo && !t.toHotel));
     pre.forEach((t) => { html += transferCard(t); });
-    flights.forEach((f) => { html += flightCard(f, { showAirportBy: true }); });
+    flights.forEach((f) => { html += flightGuide(f) + fold('day', f.id, false, flightSummary(f), flightCard(f)); });
     post.forEach((t) => { html += transferCard(t); });
-    if (tonight) html += hotelCard(tonight, tonight.checkIn === date ? 'checkin' : 'tonight');
+    if (tonight) {
+      const mode = tonight.checkIn === date ? 'checkin' : 'tonight';
+      html += hotelGuide(tonight, mode) + hotelFold(tonight, mode);
+    }
     if (attrs.length) {
       html += `<h2 class="section-h">🌴 מה אפשר לעשות היום</h2>`;
       attrs.forEach((a) => { html += attractionCard(a, true); });
@@ -302,6 +307,23 @@
     </details>`;
   };
 
+  const flightGuide = (f) => {
+    const c = f.connection;
+    return `<div class="guide">🕐 להיות בשדה התעופה עד <b>${App.airportBy(f)}</b></div>
+      ${c ? `<div class="guide ${c.terminalChange ? 'guide-warn' : ''}">🔁 יש קונקשן ב${esc(c.airport)} (${esc(c.duration)}), שימו לב${c.terminalChange ? ': צריך להחליף טרמינל' : ''}</div>` : ''}`;
+  };
+
+  const hotelGuide = (h, mode) => {
+    const tm = App.hotelTimes(h);
+    if (mode === 'checkout') return `<div class="guide guide-warn">🧳 צ'ק אאוט היום עד <b>${tm.checkOutTime}</b></div>`;
+    if (mode === 'checkin') return `<div class="guide">🛎️ צ'ק אין היום מ-<b>${tm.checkInTime}</b></div>`;
+    return '';
+  };
+
+  const hotelFold = (h, mode) => fold('day', h.id, false,
+    hotelSummary(h) + (mode === 'tonight' ? '<div class="tag fold-tag">🌙 כאן ישנים הלילה</div>' : ''),
+    hotelCard(h, mode, { noBanner: true }), `style="--accent:${App.place(h.place).color}"`);
+
   const flightSummary = (f) => {
     const first = f.legs[0], last = f.legs[f.legs.length - 1];
     const nextDay = App.localDate(last.arr) !== App.localDate(first.dep);
@@ -328,18 +350,23 @@
         return `
         <div class="list-date ${isNext ? 'is-next' : ''} ${App.localDate(f.legs[f.legs.length - 1].arr) < App.today() ? 'is-past' : ''}">
           ${isNext ? '<span class="tag">הטיסה הבאה</span>' : ''}
-          ${fold('flights', f.id, isNext, flightSummary(f), flightCard(f, { showAirportBy: true }))}
+          ${fold('flights', f.id, false, flightSummary(f), flightCard(f, { showAirportBy: true }))}
         </div>`;
       }).join('')}`;
   };
 
   const hotelsView = () => {
     const tonight = App.hotelForNight(App.today());
-    // Default open: tonight's hotel, or the next one before the trip.
-    const current = tonight || App.trip.hotels.find((h) => h.checkOut >= App.today());
+    // Marked: tonight's hotel, or the next one before/between stays.
+    const current = tonight || App.trip.hotels.find((h) => h.checkIn > App.today());
     return `<h1 class="page-h">🏨 מלונות</h1>
-      ${App.trip.hotels.map((h) => `<div class="${h.checkOut < App.today() ? 'is-past' : ''}">${fold('hotels', h.id, current && current.id === h.id,
-        hotelSummary(h), hotelCard(h, tonight && tonight.id === h.id ? 'tonight' : ''), `style="--accent:${App.place(h.place).color}"`)}</div>`).join('')}
+      ${App.trip.hotels.map((h) => {
+        const isCur = current && current.id === h.id;
+        return `<div class="list-date ${isCur ? 'is-next' : ''} ${h.checkOut < App.today() ? 'is-past' : ''}">
+          ${isCur ? `<span class="tag">${tonight ? '🌙 כאן ישנים הלילה' : 'המלון הבא'}</span>` : ''}
+          ${fold('hotels', h.id, false, hotelSummary(h), hotelCard(h, tonight && tonight.id === h.id ? 'tonight' : ''), `style="--accent:${App.place(h.place).color}"`)}
+        </div>`;
+      }).join('')}
       ${App.trip.hotelDefaults.timesEstimated ? '<p class="muted center">שעות צ\'ק אין ואאוט הן השעות המקובלות ויעודכנו לפי המלון.</p>' : ''}`;
   };
 

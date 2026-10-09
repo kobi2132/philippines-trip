@@ -275,3 +275,9 @@ small { font-size: .78rem; }
 .booking-flight .booking-id { display: flex; flex-direction: column; align-items: flex-start; gap: 2px; }
 .booking-flight .booking-id span { width: auto; }
 .booking-flight .booking-btns .copy { padding: 6px 12px; }
+.guide { background: #ecfeff; color: #155e75; border-radius: 12px; padding: 8px 12px; margin: 12px 0 -4px; font-weight: 500; }
+.guide b { font-size: 1.15rem; }
+.guide small { color: var(--muted); font-weight: 400; }
+.guide-warn { background: var(--warn-bg); color: #9a3412; }
+.guide + .card { margin-top: 10px; }
+.fold-tag { margin: 6px 0 0; }
