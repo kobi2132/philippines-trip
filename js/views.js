@@ -146,7 +146,7 @@
 
   const attractionCard = (a, compact) => {
     const t = a.tags || {};
-    const done = (App.store.get('done', {}))[a.id];
+    const done = App.isDone(a.id);
     return `
     <section class="card card-attr ${done ? 'is-done' : ''}">
       <div class="card-title"><span class="ico ico-green">${t.water ? '🏝️' : '🧭'}</span><h3>${esc(a.name)}</h3>${a.mustSee ? '<span class="must">⭐ חובה</span>' : ''}</div>
@@ -165,11 +165,17 @@
     </section>`;
   };
 
-  const checklist = (key, items) => {
-    const state = App.store.get('check_' + key, {});
-    const disabled = App.canEdit() ? '' : 'disabled';
-    return `<ul class="checklist">${items.map((it, i) => `
-      <li><label><input type="checkbox" data-check="${key}" data-i="${i}" ${state[i] ? 'checked' : ''} ${disabled}><span>${esc(it)}</span></label></li>`).join('')}</ul>`;
+  // A checklist card. Travelers tick items; "עריכה" lets them add and delete items too.
+  const checklistCard = (key, ico, icoClass, title) => {
+    const can = App.canEdit(), editing = can && App.editList === key;
+    const rows = App.getList(key).map((it) => `
+      <li><label><input type="checkbox" data-check="${key}" data-id="${esc(it.id)}" ${it.done ? 'checked' : ''} ${can ? '' : 'disabled'}><span>${esc(it.text)}</span></label>
+        ${editing ? `<button class="li-del" data-list-del="${key}" data-id="${esc(it.id)}" aria-label="מחיקה">🗑️</button>` : ''}</li>`).join('');
+    return `<section class="card"><div class="card-title"><span class="ico ${icoClass}">${ico}</span><h3>${title}</h3>
+        ${can ? `<button class="list-edit${editing ? ' on' : ''}" data-list-edit="${key}">${editing ? '✔️ סיום' : '✏️ עריכה'}</button>` : ''}</div>
+      <ul class="checklist">${rows}</ul>
+      ${editing ? `<div class="list-add"><input type="text" id="add-${key}" placeholder="להוסיף פריט..." enterkeyhint="done"><button class="btn" data-list-add="${key}">➕</button></div>` : ''}
+    </section>`;
   };
 
   const weatherSlot = (date, placeKey) => placeKey ? `<div class="weather" data-weather="${date}|${placeKey}"></div>` : '';
@@ -263,7 +269,7 @@
         <h2>מתרגשים? 🎒 הגיע הזמן לארוז!</h2>
         <div class="big-callout">🕐 מחר צריך להיות בנתב"ג עד <b>${App.airportBy(f)}</b></div>
       </section>
-      <section class="card"><div class="card-title"><span class="ico ico-orange">🧳</span><h3>רשימת אריזה</h3></div>${checklist('packing', App.trip.checklists.packing)}</section>
+      ${checklistCard('packing', '🧳', 'ico-orange', 'רשימת אריזה')}
       ${flightCard(f)}`;
   };
 
@@ -285,7 +291,7 @@
         <p class="muted">המראה ב${App.longDate(T.start)}, ${App.localTime(T.flights[0].legs[0].dep)}</p>
       </header>
       <a class="btn btn-wide" href="#/day/${T.start}">👀 להציץ ביום הראשון</a>
-      <section class="card"><div class="card-title"><span class="ico ico-blue">📝</span><h3>מה עוד צריך לעשות לפני הטיול</h3></div>${checklist('before', T.checklists.before)}</section>`;
+      ${checklistCard('before', '📝', 'ico-blue', 'מה עוד צריך לעשות לפני הטיול')}`;
   };
 
   const todayView = () => {
@@ -438,8 +444,8 @@
         <p>🕐 ${esc(I.timeDiff)}</p><p class="clocks" data-clocks>${App.clocks()}</p>
         <p>🔌 ${esc(I.plug)}</p>
         <p>💵 המטבע: ${esc(I.currency.name)} (להמרה: כפתור 💱)</p></section>
-      <section class="card"><div class="card-title"><span class="ico ico-blue">📝</span><h3>לפני הטיול</h3></div>${checklist('before', T.checklists.before)}</section>
-      <section class="card"><div class="card-title"><span class="ico ico-orange">🧳</span><h3>רשימת אריזה</h3></div>${checklist('packing', T.checklists.packing)}</section>
+      ${checklistCard('before', '📝', 'ico-blue', 'לפני הטיול')}
+      ${checklistCard('packing', '🧳', 'ico-orange', 'רשימת אריזה')}
       <div class="text-size"><span>גודל טקסט</span><button data-font="-1">א-</button><button data-font="1">א+</button><button class="font-reset" data-font="0">ברירת מחדל</button></div>
       ${App.user ? `<p class="muted center">מחוברים בתור ${esc(App.user.email)} · <a href="#" data-signout>התנתקות</a></p>` : ''}
       ${App.role === 'admin' ? '<a class="btn btn-wide" href="#/admin">⚙️ ניהול נתונים</a>' : ''}`;

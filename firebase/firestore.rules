@@ -7,6 +7,7 @@ service cloud.firestore {
     function isAdmin() { return signedIn() && email() in ['kobi2132@gmail.com']; }
     function tripDoc(tripId) { return get(/databases/$(database)/documents/trips/$(tripId)); }
     function isMember(tripId) { return signedIn() && email() in tripDoc(tripId).data.members; }
+    function canTick(tripId) { return isMember(tripId) && tripDoc(tripId).data.members[email()] in ['admin', 'traveler']; }
 
     match /trips/{tripId} {
       // Members read; only the admin creates or changes the trip and its member list.
@@ -17,6 +18,12 @@ service cloud.firestore {
       match /status/{doc} {
         allow read: if isAdmin() || isMember(tripId);
         allow write: if false;
+      }
+
+      // Checklists and "we did it" marks: travelers change them, viewers only read.
+      match /shared/{doc} {
+        allow read: if isAdmin() || isMember(tripId);
+        allow write: if isAdmin() || canTick(tripId);
       }
 
       // Each person's own device data (e.g. notification tokens).

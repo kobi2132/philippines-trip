@@ -14,6 +14,8 @@
   App.render = () => {
     if (!App.trip) return;
     const [name, arg] = route();
+    // Background updates must not wipe what the admin is in the middle of editing.
+    if (name === 'admin' && document.getElementById('admin-members')) return;
     let html;
     if (name === 'day' && arg) html = App.views.day(arg);
     else if (name === 'attractions') html = App.views.attractions(arg);
@@ -97,18 +99,74 @@
 
   // ---------- admin ----------
 
+  const ROLES = [['traveler', 'מטייל'], ['viewer', 'צופה'], ['admin', 'מנהל']];
+  const memberRow = (email = '', role = 'viewer') => `
+    <div class="member-row">
+      <input type="email" class="m-email" dir="ltr" placeholder="name@gmail.com" value="${esc(email)}">
+      <select class="m-role">${ROLES.map(([k, l]) => `<option value="${k}" ${k === role ? 'selected' : ''}>${l}</option>`).join('')}</select>
+      <button class="li-del" data-member-del aria-label="הסרה">🗑️</button>
+    </div>`;
+  let pendingRow = null; // the user row waiting for "are you sure?"
+  const fillMembers = (members) => {
+    document.getElementById('admin-members').innerHTML = Object.entries(members || {}).map(([e, r]) => memberRow(e, r)).join('');
+  };
+  const readMembers = () => {
+    const out = {};
+    for (const row of document.querySelectorAll('.member-row')) {
+      const email = row.querySelector('.m-email').value.trim().toLowerCase();
+      if (!email) continue;
+      if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) throw new Error('כתובת מייל לא תקינה: ' + email);
+      out[email] = row.querySelector('.m-role').value;
+    }
+    return out;
+  };
+
+  // The trip data as readable sections; the raw text stays one tap away for full edits.
+  const dataSummary = (d) => {
+    const sec = (title, items) => `<details class="admin-sec"><summary>${title} <span class="muted">(${items.length})</span></summary><ul>${items.map((x) => `<li>${x}</li>`).join('')}</ul></details>`;
+    const sd = (s) => s ? `<bdi>${App.shortDate(s)}</bdi>` : '';
+    const legs = (f) => (f.legs || []).map((l) => `<bdi dir="ltr">${esc(l.flightNo)} ${esc(l.from.code)}→${esc(l.to.code)} ${App.localTime(l.dep)}</bdi>`).join(' · ');
+    return `
+      <div class="admin-general">
+        <p><b>${esc(d.title)}</b></p>
+        <p>מטיילים: ${esc(d.travelers)}</p>
+        <p>תאריכים: ${d.start && d.end ? App.range(d.start, d.end) : ''}</p>
+        ${d.contact ? `<p>איש קשר: ${esc(d.contact.name)}${d.contact.whatsapp ? ` · <bdi>${esc(d.contact.whatsapp)}</bdi>` : ''}</p>` : ''}
+      </div>
+      ${sec('✈️ טיסות', (d.flights || []).map((f) => `${sd(f.date)} ${esc(f.title)}<br><span class="muted">${legs(f)} · הזמנה <bdi>${esc(f.booking)}</bdi></span>`))}
+      ${sec('🏨 מלונות', (d.hotels || []).map((h) => `${sd(h.checkIn)}–${sd(h.checkOut)} <b>${esc(h.name)}</b>, ${esc(h.city)}<br><span class="muted">${esc(h.room || '')} · הזמנה <bdi>${esc(h.booking)}</bdi></span>`))}
+      ${sec('🚕 הסעות ומעבורות', (d.transfers || []).map((t) => `${sd(t.date)} ${esc(t.title)}`))}
+      ${sec('📅 ימים', (d.days || []).map((x) => `${sd(x.date)} ${esc(x.title)}`))}
+      ${sec('🌴 אטרקציות', (d.attractions || []).map((a) => `${esc(a.name)} <span class="muted">(${esc((d.places || {})[a.place]?.name || a.place)})</span>`))}`;
+  };
+  const showSummary = () => {
+    const el = document.getElementById('admin-summary');
+    try { el.innerHTML = dataSummary(JSON.parse(document.getElementById('admin-data').value)); } catch (e) { el.innerHTML = '<p class="muted">❌ יש טעות בעריכה המתקדמת: ' + esc(e.message) + '</p>'; }
+  };
+
   function adminView(empty) {
     setTimeout(async () => {
       const cur = await App.backend.loadForAdmin().catch(() => null);
       document.getElementById('admin-data').value = JSON.stringify(cur ? cur.data : App.trip || {}, null, 2);
-      document.getElementById('admin-members').value = JSON.stringify(cur ? cur.members : { [App.user.email]: 'admin' }, null, 2);
+      fillMembers(cur ? cur.members : { [App.user.email]: 'admin' });
+      showSummary();
     });
     return `<h1 class="page-h">⚙️ ניהול נתונים</h1>
-      ${empty ? '<p>הטיול עוד לא קיים במסד הנתונים. הדביקו את trip.json ושמרו.</p>' : ''}
-      <p class="muted">משתמשים: admin (הכל), traveler (צפייה + סימונים), viewer (צפייה בלבד).</p>
-      <label class="btn btn-wide admin-file">📂 טעינה מקובץ<input type="file" accept=".json,application/json" id="admin-file" hidden></label>
-      <label class="admin-label">משתמשים<textarea id="admin-members" rows="6" dir="ltr"></textarea></label>
-      <label class="admin-label">נתוני הטיול (trip.json)<textarea id="admin-data" rows="18" dir="ltr"></textarea></label>
+      ${empty ? '<p>הטיול עוד לא קיים במסד הנתונים. טענו קובץ ושמרו.</p>' : ''}
+      <section class="card"><div class="card-title"><span class="ico ico-blue">👥</span><h3>משתמשים</h3></div>
+        <div class="admin-help muted"><p>המשתמשים נכנסים עם חשבון גוגל.</p><p>סוגי הרשאות:</p><p>מטייל: צפייה ועריכה. צופה: צפייה. מנהל: הכל</p></div>
+        <div class="member-row member-head"><span>מייל משתמש</span><span>תפקיד</span><span>הסרה</span></div>
+        <div id="admin-members"></div>
+        <button class="btn" data-member-add>➕ הוספת משתמש</button>
+      </section>
+      <section class="card"><div class="card-title"><span class="ico ico-green">🗂️</span><h3>נתוני הטיול</h3></div>
+        <div id="admin-summary"></div>
+        <details class="admin-sec admin-raw"><summary>🛠️ עריכה מתקדמת</summary>
+          <p class="muted">כל נתוני הטיול כטקסט. משנים רק אם יודעים מה עושים.</p>
+          <textarea id="admin-data" rows="18" dir="ltr"></textarea>
+          <label class="btn admin-file">📂 טעינה מקובץ<input type="file" accept=".json,application/json" id="admin-file" hidden></label>
+        </details>
+      </section>
       <button class="btn btn-wide" data-admin-save>💾 שמירה</button>
       <p id="admin-msg" class="muted"></p>`;
   }
@@ -117,10 +175,10 @@
     const msg = document.getElementById('admin-msg');
     try {
       const data = JSON.parse(document.getElementById('admin-data').value);
-      const members = JSON.parse(document.getElementById('admin-members').value);
-      const lower = Object.fromEntries(Object.entries(members).map(([k, v]) => [k.trim().toLowerCase(), v]));
-      await App.backend.save(data, lower);
-      msg.textContent = '✅ נשמר. ההורים יראו את העדכון בפתיחה הבאה.';
+      const members = readMembers();
+      if (!Object.keys(members).length) throw new Error('צריך לפחות משתמש אחד');
+      await App.backend.save(data, members);
+      msg.textContent = '✅ נשמר. כולם יראו את העדכון בפתיחה הבאה.';
     } catch (e) {
       msg.textContent = '❌ ' + e.message;
     }
@@ -168,7 +226,7 @@
   };
 
   document.addEventListener('click', async (e) => {
-    const t = e.target.closest('[data-install],[data-install-help],[data-dismiss],[data-push],[data-copy],[data-check],[data-done],[data-show-hotel],[data-close],[data-font],[data-signin],[data-signout],[data-admin-save],[data-fx],.arrow.off');
+    const t = e.target.closest('[data-install],[data-install-help],[data-dismiss],[data-push],[data-copy],[data-check],[data-done],[data-show-hotel],[data-close],[data-font],[data-signin],[data-signout],[data-admin-save],[data-fx],[data-list-edit],[data-list-add],[data-list-del],[data-member-add],[data-member-del],[data-member-confirm],.arrow.off');
     if (!t) return;
     if (t.matches('.arrow.off')) { e.preventDefault(); return; }
     if (t.hasAttribute('data-fx')) {
@@ -200,7 +258,13 @@
       try { await navigator.clipboard.writeText(t.dataset.copy); t.textContent = '✅ הועתק'; } catch (err) { t.textContent = t.dataset.copy; }
       setTimeout(() => { t.textContent = '📋 העתק'; }, 2000);
     } else if (t.dataset.done) {
-      const done = App.store.get('done', {}); done[t.dataset.done] = !done[t.dataset.done]; App.store.set('done', done); App.render();
+      App.toggleDone(t.dataset.done); App.render();
+    } else if (t.dataset.listEdit) {
+      App.editList = App.editList === t.dataset.listEdit ? null : t.dataset.listEdit; App.render();
+    } else if (t.dataset.listAdd) {
+      addListItem(t.dataset.listAdd);
+    } else if (t.dataset.listDel) {
+      App.deleteItem(t.dataset.listDel, t.dataset.id); App.render();
     } else if (t.dataset.showHotel) {
       document.body.insertAdjacentHTML('beforeend', App.showHotelModal(App.hotelById(t.dataset.showHotel)));
     } else if (t.hasAttribute('data-close')) {
@@ -213,6 +277,21 @@
       try { await App.backend.signIn(); } catch (err) { document.getElementById('login-err').textContent = 'הכניסה לא הצליחה, נסו שוב (' + err.code + ')'; }
     } else if (t.hasAttribute('data-signout')) {
       e.preventDefault(); App.backend.signOut();
+    } else if (t.hasAttribute('data-member-add')) {
+      document.getElementById('admin-members').insertAdjacentHTML('beforeend', memberRow());
+      document.querySelector('.member-row:last-child .m-email').focus();
+    } else if (t.hasAttribute('data-member-del')) {
+      pendingRow = t.closest('.member-row');
+      const email = pendingRow.querySelector('.m-email').value.trim();
+      document.body.insertAdjacentHTML('beforeend', `
+        <div class="modal" data-close><div class="modal-box confirm-box" dir="rtl">
+          <h2>בטוח?</h2>
+          <p>להסיר את <bdi>${esc(email || 'המשתמש')}</bdi>${email ? '' : ' הריק'}? השינוי נשמר רק אחרי לחיצה על 💾 שמירה.</p>
+          <div class="btn-row"><button class="btn btn-danger" data-member-confirm>🗑️ מחיקה</button><button class="btn" data-close>ביטול</button></div>
+        </div></div>`);
+    } else if (t.hasAttribute('data-member-confirm')) {
+      pendingRow?.remove(); pendingRow = null;
+      document.querySelector('.modal')?.remove();
     } else if (t.hasAttribute('data-admin-save')) {
       adminSave();
     }
@@ -220,10 +299,19 @@
 
   document.addEventListener('change', (e) => {
     const t = e.target;
-    if (t.dataset.check) {
-      const key = 'check_' + t.dataset.check;
-      const s = App.store.get(key, {}); s[t.dataset.i] = t.checked; App.store.set(key, s);
-    }
+    if (t.dataset.check) App.toggleItem(t.dataset.check, t.dataset.id, t.checked);
+  });
+
+  // Add the typed item and keep the box open for the next one.
+  function addListItem(key) {
+    const input = document.getElementById('add-' + key);
+    App.addItem(key, input.value);
+    App.render();
+    document.getElementById('add-' + key)?.focus();
+  }
+  document.addEventListener('input', (e) => { if (e.target.id === 'admin-data') showSummary(); });
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' && e.target.matches('.list-add input')) addListItem(e.target.id.slice(4));
   });
 
   // Admin: load a trip.json, or an import file shaped { members, data }.
@@ -233,7 +321,8 @@
       const j = JSON.parse(await e.target.files[0].text());
       const data = j.data || j;
       document.getElementById('admin-data').value = JSON.stringify(data, null, 2);
-      if (j.members) document.getElementById('admin-members').value = JSON.stringify(j.members, null, 2);
+      if (j.members) fillMembers(j.members);
+      showSummary();
       document.getElementById('admin-msg').textContent = '📂 הקובץ נטען. בדקו ולחצו שמירה.';
     } catch (err) {
       document.getElementById('admin-msg').textContent = '❌ הקובץ לא תקין: ' + err.message;

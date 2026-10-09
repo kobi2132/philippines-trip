@@ -37,6 +37,19 @@
     App.render();
   }
 
+  let sharedWatched = false;
+  function watchShared() {
+    if (sharedWatched) return;
+    sharedWatched = true;
+    const { fsMod, db } = fb;
+    fsMod.onSnapshot(fsMod.doc(db, 'trips', cfg.tripId, 'shared', 'state'), (snap) => {
+      if (snap.metadata.hasPendingWrites) return; // our own change, already shown
+      App.setShared(snap.exists() ? snap.data() : {});
+      // Don't redraw under someone typing a new list item.
+      if (!(document.activeElement && document.activeElement.matches('.list-add input'))) App.render();
+    }, () => { sharedWatched = false; });
+  }
+
   App.backend = {
     async start() {
       // 1. Preview build: data baked into the page.
@@ -68,6 +81,7 @@
           if (!role) { App.showScreen('no-access'); return; }
           App.store.set(cacheKey(), { trip: d.data, role, user: App.user });
           useTrip(d.data, role, 'live');
+          watchShared();
         }, (err) => {
           if (err.code === 'permission-denied') App.showScreen('no-access');
         });
@@ -102,6 +116,14 @@
     async save(data, members) {
       const { fsMod, db } = fb;
       await fsMod.setDoc(fsMod.doc(db, 'trips', cfg.tripId), { data, members, updatedAt: fsMod.serverTimestamp() });
+    },
+
+    // Travelers and admin (enforced by Firestore rules): checklists and "we did it" marks.
+    async saveShared(patch) {
+      if (!fb || !App.canEdit()) return;
+      const { fsMod, db } = fb;
+      await fsMod.setDoc(fsMod.doc(db, 'trips', cfg.tripId, 'shared', 'state'),
+        { ...patch, updatedAt: fsMod.serverTimestamp(), by: App.user.email }, { merge: true });
     },
 
     // Ask permission, get this phone's push token, and register it for the trip.
