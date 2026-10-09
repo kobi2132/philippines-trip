@@ -110,29 +110,45 @@ export function legsToCheck(trip, now, lastChecked = {}, notified = {}) {
   return res;
 }
 
+// Telegram messages are one fact per line: "label: value".
+const lines = (title, rows) => [`<b>${title}</b>`, ...rows.filter(([, v]) => v).map(([k, v]) => `${k}: ${v}`)].join('\n');
+const legRoute = (leg) => `${leg.from.city || leg.from.code} ← ${leg.to.city || leg.to.code}`;
+
 // Landed: a note for Jacob so he can check in with them.
 export function landedAlert(leg, prev, next) {
   if (!next || next.status !== 'landed' || (prev && prev.status === 'landed')) return null;
-  const to = leg.to.city || leg.to.code;
-  return `🛬 <b>טיסה ${leg.flightNo} נחתה</b> ב${to}${next.arrLocal ? ` ב-${next.arrLocal}` : ''}. זה זמן טוב לשלוח להם הודעה.`;
+  return lines('🛬 המטוס נחת', [['טיסה', leg.flightNo], ['מסלול', legRoute(leg)], ['נחת בשעה', next.arrLocal]]) + '\nזה זמן טוב לשלוח להם הודעה 💬';
 }
 
 // Compare a leg's new status with what we last told them; return a push or null.
+// kind/oldDep/newDep/gate let Telegram show the same change as separate lines.
 export function flightChangeAlert(leg, prev, next) {
   if (!next) return null;
   const p = prev || { status: 'scheduled', depLocal: localTime(leg.dep), gate: null };
   const title = `⚠️ עדכון לטיסה ${leg.flightNo}`;
   if (next.status === 'cancelled' && p.status !== 'cancelled') {
-    return { title: `❌ טיסה ${leg.flightNo} בוטלה`, body: 'כדאי לפנות לדלפק חברת התעופה ולעדכן את יעקב.' };
+    return { kind: 'cancelled', title: `❌ טיסה ${leg.flightNo} בוטלה`, body: 'כדאי לפנות לדלפק חברת התעופה ולעדכן את יעקב.' };
   }
   if (next.depLocal && p.depLocal && Math.abs(toMin(next.depLocal) - toMin(p.depLocal)) >= 20) {
-    return { title, body: `שעת ההמראה השתנתה ל-${next.depLocal} (במקום ${p.depLocal}).` };
+    return { kind: 'time', newDep: next.depLocal, oldDep: p.depLocal, gate: next.gate,
+      title, body: `שעת ההמראה השתנתה ל-${next.depLocal} (במקום ${p.depLocal}).` };
   }
   if (next.gate && next.gate !== p.gate) {
-    return { title: `🚪 שער לטיסה ${leg.flightNo}: ${next.gate}`, body: `המראה ב-${next.depLocal || localTime(leg.dep)}.` };
+    return { kind: 'gate', gate: next.gate, newDep: next.depLocal || localTime(leg.dep),
+      title: `🚪 שער לטיסה ${leg.flightNo}: ${next.gate}`, body: `המראה ב-${next.depLocal || localTime(leg.dep)}.` };
   }
   return null;
 }
+
+// The same change, written for Jacob on Telegram.
+export function telegramFlightText(leg, a) {
+  const base = [['טיסה', leg.flightNo], ['מסלול', legRoute(leg)]];
+  if (a.kind === 'cancelled') return lines('❌ הטיסה בוטלה', base);
+  if (a.kind === 'time') return lines('⏰ שינוי בשעת ההמראה', [...base, ['המראה חדשה', `<b>${a.newDep}</b>`], ['במקום', a.oldDep], ['שער', a.gate]]);
+  return lines('🚪 פורסם שער', [...base, ['שער', `<b>${a.gate}</b>`], ['המראה', a.newDep]]);
+}
+
+export const telegramErrorText = (leg, message) => lines('⚠️ בדיקת הטיסות נכשלה', [['טיסה', leg && leg.flightNo], ['מסלול', leg && legRoute(leg)], ['פרטים', message]]);
 
 // Online check-in sites, by the airline code of the booking's first flight.
 export const CHECKIN = {
@@ -153,12 +169,16 @@ export function telegramReminders(trip) {
     const dep = new Date(first.dep);
     const link = CHECKIN[first.flightNo.slice(0, 2)];
     out.push({ key: `tg_checkin_${f.date}_${first.flightNo}`, at: new Date(dep.getTime() - 24 * 3600e3),
-      text: `✅ <b>צ'ק אין פתוח</b> לטיסה של ${trip.travelers}\n${route(f)} · ${first.flightNo} · ${shortDate(f.date)} ב-${localTime(first.dep)}\nמספר הזמנה: <code>${f.booking}</code>${link ? `\n${link}` : ''}` });
+      text: lines(`✅ צ'ק אין פתוח: ${trip.travelers}`, [
+        ['טיסה', f.legs.map((l) => l.flightNo).join(' + ')], ['מסלול', route(f)], ['תאריך', shortDate(f.date)],
+        ['בשעה', localTime(first.dep)], ['הזמנה', `<code>${f.booking}</code>`], ["צ'ק אין", link]]) });
     const tz = tzOfDeparture(f);
     const morning = plannedReminders(trip).find((r) => r.key === `morning_${f.date}`);
     if (morning) {
       out.push({ key: `tg_day_${f.date}`, at: zonedTime(morning.date, morning.time, tz),
-        text: `✈️ <b>היום טסים</b>: ${route(f)}\n${first.flightNo} ב-${localTime(first.dep)}. להיות בשדה עד <b>${airportBy(f)}</b>. הזמנה <code>${f.booking}</code>` });
+        text: lines('✈️ היום טסים', [
+          ['טיסה', f.legs.map((l) => l.flightNo).join(' + ')], ['מסלול', route(f)], ['בשעה', localTime(first.dep)],
+          ['להיות בשדה עד', `<b>${airportBy(f)}</b>`], ['הזמנה', `<code>${f.booking}</code>`]]) });
     }
   }
   return out;

@@ -4,7 +4,7 @@
 import { initializeApp, cert } from 'firebase-admin/app';
 import { getFirestore, FieldValue } from 'firebase-admin/firestore';
 import { getMessaging } from 'firebase-admin/messaging';
-import { dueReminders, legsToCheck, flightChangeAlert, landedAlert, dueTelegram, telegramReminders } from './schedule.mjs';
+import { dueReminders, legsToCheck, flightChangeAlert, landedAlert, dueTelegram, telegramReminders, telegramFlightText, telegramErrorText } from './schedule.mjs';
 import { telegram, telegramOn } from './telegram.mjs';
 import { fetchLegStatus } from './flights.mjs';
 
@@ -59,9 +59,9 @@ if (process.env.TG_SAMPLES === '1') {
     flightChangeAlert(leg, null, { status: 'scheduled', depLocal: leg.dep.slice(11, 16), gate: 'B7' }),
     flightChangeAlert(leg, null, { status: 'cancelled' }),
   ];
-  for (const a of alerts) await sample(`<b>${a.title}</b>\n${a.body}`);
+  for (const a of alerts) await sample(telegramFlightText(leg, a));
   await sample(landedAlert(f.legs[f.legs.length - 1], { status: 'departed' }, { status: 'landed', arrLocal: '09:42' }));
-  await sample('⚠️ בדיקת הטיסות נכשלה: AeroDataBox 429 for FZ1550');
+  await sample(telegramErrorText(leg, 'AeroDataBox 429 for FZ1550'));
   process.exit(0);
 }
 
@@ -96,7 +96,7 @@ if (apiKey) {
       const alert = flightChangeAlert(leg, notified[key], s);
       if (alert) {
         await push(alert.title, alert.body, `#/day/${leg.dep.slice(0, 10)}`);
-        await telegram(`<b>${alert.title}</b>\n${alert.body}`);
+        await telegram(telegramFlightText(leg, alert));
       }
       const landed = landedAlert(leg, notified[key], s);
       if (landed) await telegram(landed);
@@ -104,7 +104,7 @@ if (apiKey) {
     } catch (e) {
       console.error(e.message);
       // Tell Jacob when checking flights fails, at most every 6 hours.
-      if (now.getTime() - (state.tgErrorAt || 0) > 6 * 3600e3 && await telegram(`⚠️ בדיקת הטיסות נכשלה: ${e.message}`)) state.tgErrorAt = now.getTime();
+      if (now.getTime() - (state.tgErrorAt || 0) > 6 * 3600e3 && await telegram(telegramErrorText(leg, e.message))) state.tgErrorAt = now.getTime();
     }
   }
 }
