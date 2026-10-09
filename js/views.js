@@ -96,7 +96,7 @@
       ${body}
       ${f.arrivalTransfer ? `<p class="note">🔀 ${esc(f.arrivalTransfer)}</p>` : ''}
       <details class="more"><summary>🧳 כבודה</summary><p>${esc(f.baggage)}</p><p>${esc(f.carryOn)}</p></details>
-      <div class="booking"><span>מספר הזמנה לצ'ק אין</span><b class="code">${esc(f.booking)}</b><div class="booking-btns">${checkinBtn(f)}${copyBtn(f.booking)}</div></div>
+      <div class="booking booking-flight"><div class="booking-id"><span>צ'ק אין ומספר הזמנה</span><b class="code">${esc(f.booking)}</b></div><div class="booking-btns">${checkinBtn(f)}${copyBtn(f.booking)}</div></div>
     </section>`;
   };
 
