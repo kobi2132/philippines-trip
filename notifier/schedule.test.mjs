@@ -52,6 +52,15 @@ test('poll schedule: 12h, 3h, then every 20 min; stops once landed', () => {
   assert.equal(legsToCheck(trip, new Date('2026-11-08T01:00:00Z'), { 'F2_2026-11-08': new Date('2026-11-08T00:50:00Z').getTime() }).length, 0);
 });
 
+test('daily check before the 4-day window, first flight only', () => {
+  const first = trip.flights[0].legs[0], later = trip.flights[1].legs[0];
+  const t = new Date(first.dep).getTime() - 20 * 24 * 3600e3;
+  assert.equal(pollEvery(first, t, null, true), 24 * 3600e3);
+  assert.equal(pollEvery(later, t, null, false), null);
+  assert.ok(legsToCheck(trip, new Date(t)).every((x) => trip.flights[0].legs.includes(x.leg)));
+  assert.ok(legsToCheck(trip, new Date(t)).length > 0);
+});
+
 test('landed note once', () => {
   const l = trip.flights[1].legs[0];
   assert.match(landedAlert(l, { status: 'departed' }, { status: 'landed', arrLocal: '13:05' }), /13:05/);

@@ -3,8 +3,13 @@
 
 export const telegramOn = () => !!(process.env.TELEGRAM_BOT_TOKEN && process.env.TELEGRAM_CHAT_ID);
 
+// Telegram aligns a line by its first letter, so lines starting with an emoji, a flight number or a link
+// came out left-aligned. A right-to-left mark at the start of every line keeps the Hebrew on the right.
+const rtl = (text) => text.split('\n').map((l) => '\u200F' + l).join('\n');
+
 export async function telegram(text) {
   if (!telegramOn()) return false;
+  text = rtl(text);
   const res = await fetch(`https://api.telegram.org/bot${process.env.TELEGRAM_BOT_TOKEN}/sendMessage`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },

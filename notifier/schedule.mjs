@@ -81,10 +81,11 @@ export function dueReminders(trip, now, sent = {}) {
 }
 
 // How often to check a leg right now (ms), or null when it needs no check.
-// Every 12h from 4 days out; every 3h in the last day; every 20 min from 4h before take-off
+// Once a day before that for the first flight only (catches early schedule changes, ~2 requests a day);
+// every 12h from 4 days out; every 3h in the last day; every 20 min from 4h before take-off
 // (longer while a delayed flight hasn't left yet) and around landing until it has landed.
 const H = 3600e3, M = 60e3;
-export function pollEvery(leg, t, last) {
+export function pollEvery(leg, t, last, daily = false) {
   const status = last && last.status;
   if (status === 'landed' || status === 'cancelled') return null;
   const dep = new Date(leg.dep).getTime(), arr = new Date(leg.arr).getTime();
@@ -93,6 +94,7 @@ export function pollEvery(leg, t, last) {
   if (!airborne && t >= dep - 4 * H && t <= dep + 6 * H) return 20 * M;
   if (t >= dep - 24 * H && t < dep - 4 * H) return 3 * H;
   if (t >= dep - 4 * 24 * H && t < dep - 24 * H) return 12 * H;
+  if (daily && t < dep - 4 * 24 * H) return 24 * H;
   return null;
 }
 
@@ -100,39 +102,55 @@ export function pollEvery(leg, t, last) {
 export function legsToCheck(trip, now, lastChecked = {}, notified = {}) {
   const t = now.getTime();
   const res = [];
-  for (const f of trip.flights) {
+  trip.flights.forEach((f, i) => {
     for (const leg of f.legs) {
       const key = `${leg.flightNo}_${leg.dep.slice(0, 10)}`;
-      const every = pollEvery(leg, t, notified[key]);
+      const every = pollEvery(leg, t, notified[key], i === 0);
       if (every && t - (lastChecked[key] || 0) >= every - M) res.push({ key, leg });
     }
-  }
+  });
   return res;
 }
+
+// Telegram messages are one fact per line: "label: value".
+const lines = (title, rows) => [`<b>${title}</b>`, ...rows.filter(([, v]) => v).map(([k, v]) => `${k}: ${v}`)].join('\n');
+const legRoute = (leg) => `${leg.from.city || leg.from.code} ← ${leg.to.city || leg.to.code}`;
 
 // Landed: a note for Jacob so he can check in with them.
 export function landedAlert(leg, prev, next) {
   if (!next || next.status !== 'landed' || (prev && prev.status === 'landed')) return null;
-  const to = leg.to.city || leg.to.code;
-  return `🛬 <b>טיסה ${leg.flightNo} נחתה</b> ב${to}${next.arrLocal ? ` ב-${next.arrLocal}` : ''}. זה זמן טוב לשלוח להם הודעה.`;
+  return lines('🛬 המטוס נחת', [['טיסה', leg.flightNo], ['מסלול', legRoute(leg)], ['נחת בשעה', next.arrLocal]]) + '\nזה זמן טוב לשלוח להם הודעה 💬';
 }
 
 // Compare a leg's new status with what we last told them; return a push or null.
+// kind/oldDep/newDep/gate let Telegram show the same change as separate lines.
 export function flightChangeAlert(leg, prev, next) {
   if (!next) return null;
   const p = prev || { status: 'scheduled', depLocal: localTime(leg.dep), gate: null };
   const title = `⚠️ עדכון לטיסה ${leg.flightNo}`;
   if (next.status === 'cancelled' && p.status !== 'cancelled') {
-    return { title: `❌ טיסה ${leg.flightNo} בוטלה`, body: 'כדאי לפנות לדלפק חברת התעופה ולעדכן את יעקב.' };
+    return { kind: 'cancelled', title: `❌ טיסה ${leg.flightNo} בוטלה`, body: 'כדאי לפנות לדלפק חברת התעופה ולעדכן את יעקב.' };
   }
   if (next.depLocal && p.depLocal && Math.abs(toMin(next.depLocal) - toMin(p.depLocal)) >= 20) {
-    return { title, body: `שעת ההמראה השתנתה ל-${next.depLocal} (במקום ${p.depLocal}).` };
+    return { kind: 'time', newDep: next.depLocal, oldDep: p.depLocal, gate: next.gate,
+      title, body: `שעת ההמראה השתנתה ל-${next.depLocal} (במקום ${p.depLocal}).` };
   }
   if (next.gate && next.gate !== p.gate) {
-    return { title: `🚪 שער לטיסה ${leg.flightNo}: ${next.gate}`, body: `המראה ב-${next.depLocal || localTime(leg.dep)}.` };
+    return { kind: 'gate', gate: next.gate, newDep: next.depLocal || localTime(leg.dep),
+      title: `🚪 שער לטיסה ${leg.flightNo}: ${next.gate}`, body: `המראה ב-${next.depLocal || localTime(leg.dep)}.` };
   }
   return null;
 }
+
+// The same change, written for Jacob on Telegram.
+export function telegramFlightText(leg, a) {
+  const base = [['טיסה', leg.flightNo], ['מסלול', legRoute(leg)]];
+  if (a.kind === 'cancelled') return lines('❌ הטיסה בוטלה', base);
+  if (a.kind === 'time') return lines('⏰ שינוי בשעת ההמראה', [...base, ['המראה חדשה', `<b>${a.newDep}</b>`], ['במקום', a.oldDep], ['שער', a.gate]]);
+  return lines('🚪 פורסם שער', [...base, ['שער', `<b>${a.gate}</b>`], ['המראה', a.newDep]]);
+}
+
+export const telegramErrorText = (leg, message) => lines('⚠️ בדיקת הטיסות נכשלה', [['טיסה', leg && leg.flightNo], ['מסלול', leg && legRoute(leg)], ['פרטים', message]]);
 
 // Online check-in sites, by the airline code of the booking's first flight.
 export const CHECKIN = {
@@ -142,24 +160,29 @@ export const CHECKIN = {
   DG: 'https://book.cebupacificair.com/Checkin/Retrieve',
 };
 
-const route = (f) => `${f.legs[0].from.city || f.legs[0].from.code} ← ${f.legs[f.legs.length - 1].to.city || f.legs[f.legs.length - 1].to.code}`;
 
 // Messages for Jacob on Telegram: { key, at (Date), text }.
 // 24h before each flight: check-in with the link and booking code. Flight day morning: when to be at the airport.
 export function telegramReminders(trip) {
   const out = [];
   for (const f of trip.flights) {
-    const first = f.legs[0];
-    const dep = new Date(first.dep);
-    const link = CHECKIN[first.flightNo.slice(0, 2)];
-    out.push({ key: `tg_checkin_${f.date}_${first.flightNo}`, at: new Date(dep.getTime() - 24 * 3600e3),
-      text: `✅ <b>צ'ק אין פתוח</b> לטיסה של ${trip.travelers}\n${route(f)} · ${first.flightNo} · ${shortDate(f.date)} ב-${localTime(first.dep)}\nמספר הזמנה: <code>${f.booking}</code>${link ? `\n${link}` : ''}` });
-    const tz = tzOfDeparture(f);
+    // A booking with a connection gets a message per flight.
     const morning = plannedReminders(trip).find((r) => r.key === `morning_${f.date}`);
-    if (morning) {
-      out.push({ key: `tg_day_${f.date}`, at: zonedTime(morning.date, morning.time, tz),
-        text: `✈️ <b>היום טסים</b>: ${route(f)}\n${first.flightNo} ב-${localTime(first.dep)}. להיות בשדה עד <b>${airportBy(f)}</b>. הזמנה <code>${f.booking}</code>` });
-    }
+    f.legs.forEach((leg, i) => {
+      const link = CHECKIN[leg.flightNo.slice(0, 2)];
+      const part = f.legs.length > 1 ? ` (${i + 1} מתוך ${f.legs.length})` : '';
+      out.push({ key: `tg_checkin_${f.date}_${leg.flightNo}`, at: new Date(new Date(leg.dep).getTime() - 24 * 3600e3),
+        text: lines(`✅ צ'ק אין פתוח${part}`, [
+          ['טיסה', leg.flightNo], ['מסלול', legRoute(leg)], ['תאריך', shortDate(leg.dep.slice(0, 10))],
+          ['בשעה', localTime(leg.dep)], ['הזמנה', `<code>${f.booking}</code>`], ["צ'ק אין", link]]) });
+      if (morning) {
+        out.push({ key: i ? `tg_day_${f.date}_${i + 1}` : `tg_day_${f.date}`, at: zonedTime(morning.date, morning.time, tzOfDeparture(f)),
+          text: lines(`✈️ היום טסים${part}`, [
+            ['טיסה', leg.flightNo], ['מסלול', legRoute(leg)], ['תאריך', i ? shortDate(leg.dep.slice(0, 10)) : null], ['בשעה', localTime(leg.dep)],
+            i ? ['קונקשן ב', leg.from.city || leg.from.code] : ['להיות בשדה עד', `<b>${airportBy(f)}</b>`],
+            ['הזמנה', `<code>${f.booking}</code>`]]) });
+      }
+    });
   }
   return out;
 }
