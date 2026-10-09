@@ -65,6 +65,15 @@ if (process.env.TG_SAMPLES === '1') {
   process.exit(0);
 }
 
+// One-off check: does AeroDataBox already know the first flight? Logs only, saves nothing.
+if (process.env.PROBE === '1') {
+  for (const leg of trip.flights[0].legs) {
+    try { console.log(leg.flightNo, leg.dep.slice(0, 10), JSON.stringify(await fetchLegStatus(leg, process.env.AERODATABOX_KEY))); }
+    catch (e) { console.log(leg.flightNo, 'error', e.message); }
+  }
+  process.exit(0);
+}
+
 const state = (await stateRef.get()).data() || {};
 const sent = state.sent || {};
 const lastChecked = state.lastChecked || {};
