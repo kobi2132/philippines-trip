@@ -183,6 +183,14 @@ small { font-size: .78rem; }
 .checklist label { display: flex; gap: 10px; align-items: center; padding: 9px 2px; cursor: pointer; }
 .checklist input { width: 22px; height: 22px; accent-color: var(--green); flex: none; }
 .checklist input:checked + span { text-decoration: line-through; color: var(--muted); }
+.checklist li { display: flex; align-items: center; }
+.checklist label { flex: 1; }
+.li-del { border: 0; background: #fee2e2; border-radius: 10px; width: 40px; height: 36px; font-size: 1rem; cursor: pointer; flex: none; }
+.list-edit { border: 0; background: #f1f5f9; color: var(--text); border-radius: 10px; padding: 6px 10px; font: inherit; font-size: .85rem; font-weight: 600; cursor: pointer; }
+.list-edit.on { background: #dcfce7; color: #166534; }
+.list-add { display: flex; gap: 8px; margin-top: 10px; }
+.list-add input { flex: 1; min-width: 0; font: inherit; padding: 10px 12px; border-radius: 12px; border: 2px solid var(--line); }
+.list-add .btn { margin: 0; width: 52px; background: #dcfce7; }
 
 /* hero / before trip */
 .hero { text-align: center; padding: 28px 12px 8px; }
@@ -217,6 +225,17 @@ small { font-size: .78rem; }
 .text-size { flex-wrap: wrap; }
 .text-size button { font: inherit; font-weight: 700; min-width: 56px; padding: 0 12px; height: 48px; border-radius: 12px; border: 2px solid var(--line); background: var(--card); }
 .admin-label { display: block; font-weight: 600; margin-top: 12px; }
+.member-row { display: grid; grid-template-columns: 1fr 40px; gap: 6px; padding: 8px 0; border-bottom: 1px solid var(--line); }
+.member-row .m-email, .member-row .m-role { font: inherit; padding: 8px 10px; border-radius: 10px; border: 2px solid var(--line); background: #fff; min-width: 0; }
+.member-row .m-email { grid-column: 1; }
+.member-row .m-role { grid-column: 1; grid-row: 2; }
+.member-row .li-del { grid-column: 2; grid-row: 1 / span 2; height: auto; }
+.admin-general p { margin: 2px 0; }
+.admin-sec { border-top: 1px solid var(--line); padding: 8px 0; }
+.admin-sec > summary { font-weight: 700; cursor: pointer; padding: 4px 0; }
+.admin-sec ul { margin: 6px 0 0; padding-inline-start: 18px; }
+.admin-sec li { margin: 6px 0; line-height: 1.4; }
+.admin-raw textarea { width: 100%; font-family: ui-monospace, Menlo, monospace; font-size: 13px; border-radius: 12px; border: 2px solid var(--line); padding: 8px; }
 .admin-label textarea { width: 100%; font-family: ui-monospace, Menlo, monospace; font-size: 13px; border-radius: 12px; border: 2px solid var(--line); padding: 8px; }
 
 /* driver modal */
