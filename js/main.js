@@ -154,7 +154,7 @@
     return `<h1 class="page-h">⚙️ ניהול נתונים</h1>
       ${empty ? '<p>הטיול עוד לא קיים במסד הנתונים. טענו קובץ ושמרו.</p>' : ''}
       <section class="card"><div class="card-title"><span class="ico ico-blue">👥</span><h3>משתמשים</h3></div>
-        <p class="muted">המשתמשים נכנסים עם חשבון Google של המייל שכאן. מטייל: צפייה, סימונים ועריכת רשימות. צופה: צפייה בלבד. מנהל: הכל.</p>
+        <div class="admin-help muted"><p>המשתמשים נכנסים עם חשבון גוגל.</p><p>סוגי הרשאות:</p><p>מטייל: צפייה ועריכה. צופה: צפייה. מנהל: הכל</p></div>
         <div class="member-row member-head"><span>מייל משתמש</span><span>תפקיד</span><span>הסרה</span></div>
         <div id="admin-members"></div>
         <button class="btn" data-member-add>➕ הוספת משתמש</button>

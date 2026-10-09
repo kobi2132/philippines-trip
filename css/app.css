@@ -233,6 +233,8 @@ small { font-size: .78rem; }
 .confirm-box { direction: rtl; text-align: center; }
 .confirm-box .btn-row { margin-top: 6px; }
 .btn-danger { background: #dc2626; color: #fff; }
+.admin-help { font-size: .85rem; margin-bottom: 8px; }
+.admin-help p { margin: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .admin-general p { margin: 2px 0; }
 .admin-sec { border-top: 1px solid var(--line); padding: 8px 0; }
 .admin-sec > summary { font-weight: 700; cursor: pointer; padding: 4px 0; }
