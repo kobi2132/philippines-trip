@@ -181,8 +181,8 @@
     } else if (t.hasAttribute('data-close')) {
       if (e.target === t || t.tagName === 'BUTTON') document.querySelector('.modal')?.remove();
     } else if (t.dataset.font) {
-      const size = Math.min(26, Math.max(16, (App.store.get('font', 19)) + Number(t.dataset.font) * 2));
-      App.store.set('font', size); document.documentElement.style.fontSize = size + 'px';
+      const size = Math.min(24, Math.max(14, (App.store.get('font2', 16)) + Number(t.dataset.font) * 2));
+      App.store.set('font2', size); document.documentElement.style.fontSize = size + 'px';
     } else if (t.hasAttribute('data-signin')) {
       try { await App.backend.signIn(); } catch (err) { document.getElementById('login-err').textContent = 'הכניסה לא הצליחה, נסו שוב (' + err.code + ')'; }
     } else if (t.hasAttribute('data-signout')) {
@@ -259,7 +259,7 @@
 
   // ---------- boot ----------
 
-  document.documentElement.style.fontSize = App.store.get('font', 19) + 'px';
+  document.documentElement.style.fontSize = App.store.get('font2', 16) + 'px';
   if ('serviceWorker' in navigator && location.protocol === 'https:' && !window.TRIP_DATA) {
     navigator.serviceWorker.register('sw.js').catch(() => {});
   }
