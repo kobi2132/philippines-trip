@@ -50,9 +50,10 @@ if (process.env.TEST_PUSH === '1') {
 }
 
 // One of each Telegram message, built from the real trip with made-up flight changes. Telegram only.
-if (process.env.TG_SAMPLES === '1') {
+if (process.env.TG_SAMPLES) {
   const f = trip.flights[0], leg = f.legs[0];
-  const sample = (text) => telegram(`🧪 <i>דוגמה</i>\n${text}`);
+  const one = process.env.TG_SAMPLES === 'one';
+  const sample = async (text) => { await telegram(`🧪 <i>דוגמה</i>\n${text}`); if (one) process.exit(0); };
   for (const r of telegramReminders(trip).filter((x) => x.key.startsWith(`tg_checkin_${f.date}_`) || x.key.startsWith(`tg_day_${f.date}`))) await sample(r.text);
   const alerts = [
     flightChangeAlert(leg, null, { status: 'delayed', depLocal: '11:25' }),
