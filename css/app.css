@@ -220,3 +220,5 @@ small { font-size: .78rem; }
 .install-help { text-align: right; direction: rtl; }
 .install-help ol { padding-right: 22px; margin: 12px 0; line-height: 1.6; }
 .install-help li { margin-bottom: 10px; }
+.update-bar { position: fixed; left: 12px; right: 12px; bottom: calc(84px + env(safe-area-inset-bottom)); z-index: 40; display: flex; align-items: center; justify-content: space-between; gap: 10px; background: #0f172a; color: #fff; border-radius: 18px; padding: 12px 14px; box-shadow: 0 8px 24px rgba(15, 23, 42, .3); font-weight: 600; }
+.update-bar .btn { background: #fbbf24; color: #0f172a; white-space: nowrap; margin: 0; }
