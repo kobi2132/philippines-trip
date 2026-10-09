@@ -232,6 +232,7 @@
         <span><bdi>${App.weekday(date)} ${App.shortDate(date)}</bdi>${n >= 1 && n <= App.totalDays() ? ` · יום ${n}/${App.totalDays()}` : ''}</span>
       </div></div>`;
     html += dayNav(date);
+    App.flightsOn(App.addDays(date, 1)).forEach((f) => { html += checkinReminder(f); });
     if (info.prep) return html + eveContent();
 
     // Order: leave hotel → get to airport → fly → transfers → tonight's hotel → things to do
@@ -239,9 +240,9 @@
     if (out && (!tonight || out.id !== tonight.id)) html += hotelGuide(out, 'checkout') + hotelFold(out, 'checkout');
     const pre = transfers.filter((t) => t.navTo && !t.toHotel);
     const post = transfers.filter((t) => !(t.navTo && !t.toHotel));
-    pre.forEach((t) => { html += transferCard(t); });
+    pre.forEach((t) => { html += transferFold(t); });
     flights.forEach((f) => { html += flightGuide(f) + fold('day', f.id, false, flightSummary(f), flightCard(f)); });
-    post.forEach((t) => { html += transferCard(t); });
+    post.forEach((t) => { html += transferFold(t); });
     if (tonight) {
       const mode = tonight.checkIn === date ? 'checkin' : 'tonight';
       html += hotelGuide(tonight, mode) + hotelFold(tonight, mode);
@@ -305,6 +306,20 @@
       <summary>${summary}<span class="fold-btn"></span></summary>
       ${full}
     </details>`;
+  };
+
+  // Day before a flight: online check-in opens 24 hours before departure.
+  const checkinReminder = (f) => {
+    const c = CHECKIN[f.legs[0].flightNo.slice(0, 2)];
+    return `<div class="guide guide-checkin"><span>✅ מחר טיסה (${esc(f.legs[0].from.city || f.legs[0].from.name)} ← ${esc(f.legs[f.legs.length - 1].to.city || f.legs[f.legs.length - 1].to.name)}). צ'ק אין אונליין נפתח היום ב-<b>${App.localTime(f.legs[0].dep)}</b></span>
+      ${c ? `<a class="copy checkin" href="${c[1]}" target="_blank" rel="noopener">צ'ק אין</a>` : ''}</div>`;
+  };
+
+  const transferFold = (t) => {
+    const [icon, cls] = TRANSFER_ICONS[t.type] || ['🚗', 'ico-purple'];
+    const summary = `<div class="card-title"><span class="ico ${cls}">${icon}</span><h3>${esc(t.title)}</h3></div>
+      ${t.duration || t.time ? `<div class="fold-line">${t.time ? `<span>🕐 ${esc(t.timeLabel || 'שעה')} <b>${esc(t.time)}</b></span>` : ''}${t.duration ? `<span>⏱️ ${esc(t.duration)}</span>` : ''}</div>` : ''}`;
+    return fold('day', t.id, false, summary, transferCard(t));
   };
 
   const flightGuide = (f) => {

@@ -281,3 +281,6 @@ small { font-size: .78rem; }
 .guide-warn { background: var(--warn-bg); color: #9a3412; }
 .guide + .card { margin-top: 10px; }
 .fold-tag { margin: 6px 0 0; }
+.guide-checkin { display: flex; align-items: center; gap: 10px; background: #f0fdf4; color: #166534; }
+.guide-checkin span { flex: 1; }
+.guide-checkin .copy { margin: 0; white-space: nowrap; }
