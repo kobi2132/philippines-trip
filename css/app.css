@@ -189,9 +189,10 @@ small { font-size: .78rem; }
 .hero-emoji { font-size: 2.8rem; }
 .hero h1 { font-size: 1.7rem; font-weight: 800; margin-top: 8px; }
 .hero > p { font-size: 1.05rem; margin: 6px 0; }
-.countdown { display: inline-flex; flex-direction: column; align-items: center; justify-content: center; aspect-ratio: 1; min-width: 9.5rem; background: linear-gradient(135deg, #0e7490, #22c55e); color: #fff; border-radius: 28px; padding: 16px; margin: 10px 0; box-shadow: var(--shadow); }
-.countdown b { font-size: 3.4rem; line-height: 1; font-weight: 800; }
-.countdown span { font-size: 1.1rem; }
+/* Countdown keeps its original (19px-base) size on purpose: Jacob likes it big. */
+.countdown { display: inline-flex; flex-direction: column; align-items: center; justify-content: center; aspect-ratio: 1; min-width: 11.5rem; background: linear-gradient(135deg, #0e7490, #22c55e); color: #fff; border-radius: 28px; padding: 16px; margin: 10px 0; box-shadow: var(--shadow); }
+.countdown b { font-size: 5rem; line-height: 1; font-weight: 800; }
+.countdown span { font-size: 1.55rem; }
 .hero-card { text-align: center; background: linear-gradient(135deg, #ecfeff, #fef3c7); }
 .hero-card h2 { font-size: 1.5rem; }
 .center-screen { text-align: center; padding: 60px 16px; }
