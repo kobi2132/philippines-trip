@@ -123,6 +123,21 @@
 
   // ---------- events ----------
 
+  // What the browser reports about notifications, so a screenshot tells us why they fail.
+  const pushDiagnostics = async (result) => {
+    let query = '?';
+    try { query = (await navigator.permissions.query({ name: 'notifications' })).state; } catch (e) { query = 'err'; }
+    const ua = navigator.userAgent.match(/(Chrome|SamsungBrowser|Firefox|Version)\/[\d.]+/g) || [];
+    const info = [
+      'result=' + result, 'perm=' + Notification.permission, 'query=' + query,
+      'secure=' + window.isSecureContext, 'proto=' + location.protocol,
+      'standalone=' + matchMedia('(display-mode: standalone)').matches,
+      'sw=' + !!(navigator.serviceWorker && navigator.serviceWorker.controller), 'push=' + ('PushManager' in window),
+      'top=' + (window.top === window), ua.join(' '),
+    ];
+    return `<span class="diag" dir="ltr">${App.esc(info.join(' · '))}</span>`;
+  };
+
   document.addEventListener('click', async (e) => {
     const t = e.target.closest('[data-push],[data-copy],[data-check],[data-done],[data-show-hotel],[data-close],[data-font],[data-signin],[data-signout],[data-admin-save],.arrow.off');
     if (!t) return;
@@ -136,8 +151,10 @@
           // Chrome answers "denied" without asking when the site or Chrome itself is blocked.
           ? 'הטלפון חוסם התראות מהאתר הזה. כדי לפתוח: לוחצים על הסמל שמשמאל לכתובת האתר ← הרשאות ← התראות ← לאפשר. אם זה לא עוזר: הגדרות הטלפון ← אפליקציות ← Chrome ← התראות ← לאפשר.'
           : 'חלון האישור נסגר בלי תשובה. לוחצים שוב ובוחרים "אישור".';
+        if (res !== 'granted') document.getElementById('push-msg').insertAdjacentHTML('beforeend', await pushDiagnostics(res));
       } catch (err) {
         document.getElementById('push-msg').textContent = 'לא הצלחנו להפעיל התראות (' + (err.code || err.message) + ')';
+        document.getElementById('push-msg').insertAdjacentHTML('beforeend', await pushDiagnostics('error'));
       }
       t.disabled = false;
     } else if (t.dataset.copy) {

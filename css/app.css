@@ -212,3 +212,4 @@ small { font-size: .78rem; }
 .push-card { background: #fff7ed; border-radius: var(--radius); padding: 12px 16px; margin: 8px 0 12px; }
 .push-card p { margin: 0 0 4px; font-weight: 500; }
 .push-card .btn { margin-top: 6px; }
+.diag { display: block; margin-top: 10px; font-size: 12px; color: #64748b; word-break: break-all; text-align: left; }
