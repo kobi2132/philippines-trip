@@ -24,6 +24,7 @@
     tabbar().hidden = false;
     tabbar().innerHTML = TABS.map(([k, ico, label]) =>
       `<a href="#/${k}" class="${k === active ? 'on' : ''}"><span class="tab-ico">${ico}</span><span>${label}</span></a>`).join('');
+    if (!document.querySelector('.fx-fab')) { document.body.insertAdjacentHTML('beforeend', App.fxButton()); App.refreshFxRate(); }
     fillWeather();
     onScroll();
   };
@@ -161,10 +162,13 @@
   };
 
   document.addEventListener('click', async (e) => {
-    const t = e.target.closest('[data-install],[data-install-help],[data-dismiss],[data-push],[data-copy],[data-check],[data-done],[data-show-hotel],[data-close],[data-font],[data-signin],[data-signout],[data-admin-save],.arrow.off');
+    const t = e.target.closest('[data-install],[data-install-help],[data-dismiss],[data-push],[data-copy],[data-check],[data-done],[data-show-hotel],[data-close],[data-font],[data-signin],[data-signout],[data-admin-save],[data-fx],.arrow.off');
     if (!t) return;
     if (t.matches('.arrow.off')) { e.preventDefault(); return; }
-    if (t.hasAttribute('data-install')) {
+    if (t.hasAttribute('data-fx')) {
+      document.body.insertAdjacentHTML('beforeend', App.fxModal());
+      document.getElementById('fx-php').focus();
+    } else if (t.hasAttribute('data-install')) {
       App.promptInstall();
     } else if (t.hasAttribute('data-install-help')) {
       document.body.insertAdjacentHTML('beforeend', App.installHelpModal());
@@ -231,7 +235,7 @@
 
   document.addEventListener('input', (e) => {
     if (e.target.id === 'php') {
-      document.getElementById('ils').textContent = Math.round((Number(e.target.value) || 0) * App.trip.info.currency.approxIls);
+      document.getElementById('ils').textContent = Math.round((Number(e.target.value) || 0) * App.fxRate());
     }
   });
 
