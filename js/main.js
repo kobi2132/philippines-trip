@@ -25,7 +25,15 @@
     tabbar().innerHTML = TABS.map(([k, ico, label]) =>
       `<a href="#/${k}" class="${k === active ? 'on' : ''}"><span class="tab-ico">${ico}</span><span>${label}</span></a>`).join('');
     fillWeather();
+    onScroll();
   };
+
+  // When the day header scrolls away, a slim date + place bar takes its place at the top.
+  const onScroll = () => {
+    const head = document.querySelector('.day-head');
+    document.body.classList.toggle('head-gone', !!head && head.getBoundingClientRect().bottom < 0);
+  };
+  window.addEventListener('scroll', onScroll, { passive: true });
 
   // ---------- full-screen states (before the trip data is available) ----------
 

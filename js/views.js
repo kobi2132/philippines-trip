@@ -189,7 +189,7 @@
     <nav class="day-nav">
       <a class="arrow ${prev ? '' : 'off'}" href="${prev ? '#/day/' + prev : '#'}" aria-label="יום קודם">→</a>
       ${date === App.today()
-        ? '<span class="today-btn is-today">📍 היום</span>'
+        ? '<span class="today-btn is-today">היום 📍</span>'
         : '<a class="today-btn" href="#/today">↩️ חזרה להיום</a>'}
       <a class="arrow ${next ? '' : 'off'}" href="${next ? '#/day/' + next : '#'}" aria-label="יום הבא">←</a>
     </nav>`;
@@ -208,14 +208,17 @@
     const attrs = (info.attractions || []).map(App.attraction).filter(Boolean);
 
     let html = '';
-    if (!isToday) html += `<div class="other-day">📅 אתם צופים ביום ${App.weekday(date)} ${App.shortDate(date)}</div>`;
     html += `
       <header class="day-head" style="--accent:${p ? p.color : '#2563eb'}">
         <div class="day-count">${n >= 1 && n <= App.totalDays() ? `יום ${n} מתוך ${App.totalDays()}` : ''}</div>
         <h1>${p ? esc(p.name) : ''}${info.title ? ` <span>· ${esc(info.title)}</span>` : ''}</h1>
         <div class="day-date">${App.longDate(date)}</div>
         ${weatherSlot(date, info.place)}
-      </header>`;
+      </header>
+      <div class="day-mini" style="--accent:${p ? p.color : '#2563eb'}" aria-hidden="true"><div>
+        <b>${p ? esc(p.name) : ''}</b>
+        <span><bdi>${App.weekday(date)} ${App.shortDate(date)}</bdi>${n >= 1 && n <= App.totalDays() ? ` · יום ${n}/${App.totalDays()}` : ''}</span>
+      </div></div>`;
     html += dayNav(date);
     if (info.prep) return html + eveContent();
 
