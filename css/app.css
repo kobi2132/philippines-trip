@@ -230,7 +230,7 @@ small { font-size: .78rem; }
 .member-row .li-del { height: 38px; }
 .member-head { font-size: .8rem; font-weight: 700; color: var(--muted); padding-bottom: 2px; }
 .member-head span:last-child { text-align: center; }
-.confirm-box { direction: rtl; text-align: center; }
+.modal-box.confirm-box { direction: rtl; text-align: center; }
 .confirm-box .btn-row { margin-top: 6px; }
 .btn-danger { background: #dc2626; color: #fff; }
 .admin-help { font-size: .85rem; margin-bottom: 8px; }
