@@ -211,8 +211,8 @@ small { font-size: .78rem; }
 .timeline li.past { opacity: .5; }
 
 /* info */
-.calc { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; font-size: 1.1rem; }
-.calc input { width: 120px; font: inherit; padding: 10px; border-radius: 12px; border: 2px solid var(--line); }
+.btn-row-21 { grid-template-columns: 2fr 1fr; }
+.clocks { background: #f5f3ff; border-radius: 12px; padding: 8px 12px; }
 .text-size { display: flex; align-items: center; justify-content: center; gap: 10px; margin: 20px 0; }
 .text-size { flex-wrap: wrap; }
 .text-size button { font: inherit; font-weight: 700; min-width: 56px; padding: 0 12px; height: 48px; border-radius: 12px; border: 2px solid var(--line); background: var(--card); }

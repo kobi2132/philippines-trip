@@ -1,5 +1,5 @@
 // Offline support: app files are cached; bump VERSION to ship an update.
-const VERSION = 'v21';
+const VERSION = 'v22';
 const FILES = [
   './', 'index.html', 'manifest.webmanifest', 'css/app.css',
   'js/config.js', 'js/util.js', 'js/install.js', 'js/fx.js', 'js/trip.js', 'js/map.js', 'js/views.js', 'js/backend.js', 'js/main.js',

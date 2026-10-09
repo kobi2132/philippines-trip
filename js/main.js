@@ -240,11 +240,12 @@
     }
   });
 
-  document.addEventListener('input', (e) => {
-    if (e.target.id === 'php') {
-      document.getElementById('ils').textContent = Math.round((Number(e.target.value) || 0) * App.fxRate());
-    }
-  });
+  // Live "now there / now at home" line on the info screen.
+  App.clocks = () => {
+    const t = (tz) => new Date().toLocaleTimeString('he-IL', { hour: '2-digit', minute: '2-digit', timeZone: tz });
+    return `עכשיו בפיליפינים <b><bdi>${t('Asia/Manila')}</bdi></b> · בישראל <b><bdi>${t(App.trip.homeTz)}</bdi></b>`;
+  };
+  setInterval(() => document.querySelectorAll('[data-clocks]').forEach((el) => { el.innerHTML = App.clocks(); }), 30 * 1000);
 
   window.addEventListener('hashchange', () => { App.render(); window.scrollTo(0, 0); });
 
