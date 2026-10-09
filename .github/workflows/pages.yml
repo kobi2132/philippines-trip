@@ -24,6 +24,12 @@ jobs:
       - uses: actions/checkout@v4
       - name: Collect site files
         run: mkdir _site && cp -r index.html manifest.webmanifest sw.js css js icons _site/
+      - name: Stamp the version (the app compares it to version.json to offer an update)
+        run: |
+          v="${GITHUB_SHA::7}"
+          sed -i "s/<meta name=\"app-version\" content=\"dev\">/<meta name=\"app-version\" content=\"$v\">/" _site/index.html
+          grep -q "content=\"$v\"" _site/index.html
+          echo "{\"v\":\"$v\"}" > _site/version.json
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:

@@ -227,6 +227,28 @@
     if (target && !target.classList.contains('off')) location.hash = target.getAttribute('href');
   }, { passive: true });
 
+  // ---------- new version available ----------
+
+  // Pages stamps index.html and version.json with the commit; a mismatch means a newer version is live.
+  const myVersion = document.querySelector('meta[name="app-version"]')?.content || 'dev';
+  async function checkForUpdate() {
+    if (myVersion === 'dev' || document.getElementById('update-bar')) return;
+    try {
+      const res = await fetch('version.json', { cache: 'no-store' });
+      const { v } = await res.json();
+      if (v && v !== myVersion) {
+        document.body.insertAdjacentHTML('beforeend', `
+          <div id="update-bar" class="update-bar" role="status">
+            <span>✨ יש גרסה חדשה של האפליקציה</span>
+            <button class="btn" onclick="location.reload()">🔄 לעדכן עכשיו</button>
+          </div>`);
+      }
+    } catch (e) { /* offline: try again later */ }
+  }
+  setTimeout(checkForUpdate, 3000);
+  setInterval(checkForUpdate, 20 * 60 * 1000);
+  document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') checkForUpdate(); });
+
   // ---------- boot ----------
 
   document.documentElement.style.fontSize = App.store.get('font', 19) + 'px';
