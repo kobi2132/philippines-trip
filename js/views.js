@@ -428,15 +428,16 @@
       ${App.pushAvailable() ? `<section class="card"><div class="card-title"><span class="ico ico-orange">🔔</span><h3>התראות</h3></div>${pushCard(false)}</section>` : ''}
       <section class="card"><div class="card-title"><span class="ico ico-red">🆘</span><h3>חירום</h3></div>
         <a class="btn" href="tel:${esc(I.emergencyPhone)}">📞 חירום בפיליפינים: ${esc(I.emergencyPhone)}</a>
-        <a class="link-small" href="${esc(I.embassyUrl)}" target="_blank" rel="noopener">🇮🇱 שגרירות ישראל במנילה</a></section>
-      <section class="card"><div class="card-title"><span class="ico ico-blue">🛡️</span><h3>ביטוח</h3></div>
-        ${I.insurance.company ? `<p><b>${esc(I.insurance.company)}</b></p><div class="booking"><span>פוליסה</span><b class="code">${esc(I.insurance.policy)}</b>${copyBtn(I.insurance.policy)}</div>${I.insurance.phone ? `<a class="btn" href="tel:${esc(I.insurance.phone)}">📞 מוקד הביטוח</a>` : ''}` : `<p class="muted">${esc(I.insurance.note)}</p>`}</section>
-      <section class="card"><div class="card-title"><span class="ico ico-green">💵</span><h3>כסף</h3></div>
-        <p>המטבע: ${esc(I.currency.name)} (${esc(I.currency.code)})</p>
-        <label class="calc">💱 <input type="number" inputmode="decimal" id="php" placeholder="פזו"> פזו ≈ <b id="ils">0</b> ₪</label>
-        <p class="muted">${App.fxRateDate() ? 'שער עדכני' : 'שער משוער'}: 100 פזו ≈ ${Math.round(App.fxRate() * 100)} ₪</p></section>
-      <section class="card"><div class="card-title"><span class="ico ico-purple">🕐</span><h3>שעון ושקעים</h3></div>
-        <p>${esc(I.timeDiff)}</p><p>🔌 ${esc(I.plug)}</p></section>
+        <div class="btn-row btn-row-21">
+          <a class="btn" href="${esc(I.embassyUrl)}" target="_blank" rel="noopener">🇮🇱 שגרירות ישראל במנילה</a>
+          <a class="btn btn-nav" href="${App.mapsUrl('Embassy of Israel, Manila', 'driving')}" target="_blank" rel="noopener">🚕 ניווט</a>
+        </div></section>
+      ${I.insurance.company ? `<section class="card"><div class="card-title"><span class="ico ico-blue">🛡️</span><h3>ביטוח</h3></div>
+        <p><b>${esc(I.insurance.company)}</b></p><div class="booking"><span>פוליסה</span><b class="code">${esc(I.insurance.policy)}</b>${copyBtn(I.insurance.policy)}</div>${I.insurance.phone ? `<a class="btn" href="tel:${esc(I.insurance.phone)}">📞 מוקד הביטוח</a>` : ''}</section>` : ''}
+      <section class="card"><div class="card-title"><span class="ico ico-purple">🧭</span><h3>שימושי לדעת</h3></div>
+        <p>🕐 ${esc(I.timeDiff)}</p><p class="clocks" data-clocks>${App.clocks()}</p>
+        <p>🔌 ${esc(I.plug)}</p>
+        <p>💵 המטבע: ${esc(I.currency.name)} (להמרה: כפתור 💱)</p></section>
       <section class="card"><div class="card-title"><span class="ico ico-blue">📝</span><h3>לפני הטיול</h3></div>${checklist('before', T.checklists.before)}</section>
       <section class="card"><div class="card-title"><span class="ico ico-orange">🧳</span><h3>רשימת אריזה</h3></div>${checklist('packing', T.checklists.packing)}</section>
       <div class="text-size"><span>גודל טקסט</span><button data-font="-1">א-</button><button data-font="1">א+</button><button class="font-reset" data-font="0">ברירת מחדל</button></div>
