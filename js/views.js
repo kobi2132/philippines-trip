@@ -77,7 +77,7 @@
   };
   const checkinBtn = (f) => {
     const c = CHECKIN[f.legs[0].flightNo.slice(0, 2)];
-    return c ? `<a class="btn btn-checkin" href="${c[1]}" target="_blank" rel="noopener">✅ צ'ק אין באתר <bdi>${c[0]}</bdi></a>` : '';
+    return c ? `<a class="copy checkin" href="${c[1]}" target="_blank" rel="noopener" aria-label="צ'ק אין באתר ${c[0]}">✅ צ'ק אין</a>` : '';
   };
 
   const flightCard = (f, opts = {}) => {
@@ -96,7 +96,7 @@
       ${body}
       ${f.arrivalTransfer ? `<p class="note">🔀 ${esc(f.arrivalTransfer)}</p>` : ''}
       <details class="more"><summary>🧳 כבודה</summary><p>${esc(f.baggage)}</p><p>${esc(f.carryOn)}</p></details>
-      <div class="booking"><span>מספר הזמנה לצ'ק אין</span>${checkinBtn(f)}<b class="code">${esc(f.booking)}</b>${copyBtn(f.booking)}</div>
+      <div class="booking"><span>מספר הזמנה לצ'ק אין</span><b class="code">${esc(f.booking)}</b><div class="booking-btns">${checkinBtn(f)}${copyBtn(f.booking)}</div></div>
     </section>`;
   };
 
