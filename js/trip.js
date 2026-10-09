@@ -28,6 +28,14 @@
   };
 
   // When to be at the airport: 3h before international, 2h before domestic.
+  // "30–60 דקות" → 60, "כ-3 שעות" → 180, "כשעתיים" → 120: the longest the ride may take, in minutes.
+  const rideMinutes = (text) => {
+    if (!text) return 0;
+    if (/שעתיים/.test(text)) return 120;
+    const nums = (text.match(/\d+/g) || []).map(Number);
+    if (!nums.length) return /שעה/.test(text) ? 60 : 0;
+    return Math.max(...nums) * (/שעו?ת|שעה/.test(text) ? 60 : 1);
+  };
   const airportBy = (flight) => App.minusMinutes(App.localTime(flight.legs[0].dep), flight.international ? 180 : 120);
 
   // Live status written by the flight-status job: trips/{id}/status/flights
@@ -40,7 +48,7 @@
   };
 
   Object.assign(App, {
-    place, dayInfo, hotelById, hotelTimes, hotelForNight, hotelCheckingOut, flightsOn, transfersOn,
+    place, dayInfo, rideMinutes, hotelById, hotelTimes, hotelForNight, hotelCheckingOut, flightsOn, transfersOn,
     attraction, totalDays, dayNumber, phase, airportBy, statusKey, legStatus, nextFlight,
   });
 })(window.App);

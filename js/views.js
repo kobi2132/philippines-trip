@@ -183,11 +183,17 @@
   // A checklist card. Travelers tick items; "עריכה" lets them add and delete items too.
   const checklistCard = (key, ico, icoClass, title) => {
     const can = App.canEdit(), editing = can && App.editList === key;
-    const rows = App.getList(key).map((it) => `
+    const list = App.getList(key);
+    const done = list.filter((it) => it.done).length;
+    // Open items first, ticked ones sink to the bottom (unless editing, where the order stays put).
+    const items = editing ? list : [...list.filter((it) => !it.done), ...list.filter((it) => it.done)];
+    const rows = items.map((it) => `
       <li><label><input type="checkbox" data-check="${key}" data-id="${esc(it.id)}" ${it.done ? 'checked' : ''} ${can ? '' : 'disabled'}><span>${esc(it.text)}</span></label>
         ${editing ? `<button class="li-del" data-list-del="${key}" data-id="${esc(it.id)}" aria-label="מחיקה">🗑️</button>` : ''}</li>`).join('');
     return `<section class="card"><div class="card-title"><span class="ico ${icoClass}">${ico}</span><h3>${title}</h3>
+        ${list.length ? `<span class="list-progress${done === list.length ? ' all' : ''}"><bdi>${done}/${list.length}</bdi></span>` : ''}
         ${can ? `<button class="list-edit${editing ? ' on' : ''}" data-list-edit="${key}">${editing ? '✔️ סיום' : '✏️ עריכה'}</button>` : ''}</div>
+      ${list.length ? `<div class="list-bar"><i style="width:${Math.round(100 * done / list.length)}%"></i></div>` : ''}
       <ul class="checklist">${rows}</ul>
       ${editing ? `<div class="list-add"><input type="text" id="add-${key}" placeholder="להוסיף פריט..." enterkeyhint="done"><button class="btn" data-list-add="${key}">➕</button></div>` : ''}
     </section>`;
@@ -253,21 +259,69 @@
         <span><bdi>${App.weekday(date)} ${App.shortDate(date)}</bdi>${n >= 1 && n <= App.totalDays() ? ` · יום ${n}/${App.totalDays()}` : ''}</span>
       </div></div>`;
     html += dayNav(date);
-    App.flightsOn(App.addDays(date, 1)).forEach((f) => { html += checkinReminder(f); });
-    if (info.prep) return html + eveContent();
+    if (info.prep) {
+      App.flightsOn(App.addDays(date, 1)).forEach((f) => { html += checkinReminder(f); });
+      return html + eveContent();
+    }
 
-    // Order: leave hotel → get to airport → fly → transfers → tonight's hotel → things to do
-    // Flights and hotels are collapsed; what to do about them today sits above, as a guide line.
-    if (out && (!tonight || out.id !== tonight.id)) html += hotelGuide(out, 'checkout') + hotelFold(out, 'checkout');
+    // The day as a timeline: each row has its time on the side, in the order things happen.
+    // Rows without a time of their own follow the row before them.
+    const rows = [];
+    const row = (time, html, label) => rows.push({ time, html, label });
+    const firstFlight = flights[0];
     const pre = transfers.filter((t) => t.navTo && !t.toHotel);
     const post = transfers.filter((t) => !(t.navTo && !t.toHotel));
-    pre.forEach((t) => { html += transferFold(t); });
-    flights.forEach((f) => { html += flightGuide(f) + flightLive(f) + fold('day', f.id, false, flightSummary(f), flightCard(f)); });
-    post.forEach((t) => { html += transferFold(t); });
+    // When do they have to leave the hotel? The earliest of: a ferry/bus time, or the airport time minus the ride.
+    const leaveBy = (() => {
+      const timed = transfers.filter((t) => t.time && !(t.toHotel && flights.length)).map((t) => t.time);
+      if (firstFlight) {
+        const ride = pre[0] ? App.rideMinutes(pre[0].duration) : 0;
+        timed.push(ride ? App.minusMinutes(App.airportBy(firstFlight), ride) : App.airportBy(firstFlight));
+      }
+      return timed.sort()[0] || null;
+    })();
+    if (out && (!tonight || out.id !== tonight.id)) {
+      const tm = App.hotelTimes(out);
+      const early = leaveBy && leaveBy < tm.checkOutTime;
+      row(early ? leaveBy : tm.checkOutTime,
+        `<div class="guide guide-warn">🧳 ${early ? 'צ\'ק אאוט לפני היציאה' : 'צ\'ק אאוט מהמלון'}<small>${esc(out.name)}${early ? ` · המלון מאפשר עד ${tm.checkOutTime}` : ''}</small></div>`, early ? 'לפני' : 'עד');
+    }
+    pre.forEach((t) => { row(t.time || (firstFlight && pre[0] && App.rideMinutes(t.duration) ? App.minusMinutes(App.airportBy(firstFlight), App.rideMinutes(t.duration)) : null), transferFold(t), t.time ? t.timeLabel : 'יציאה'); });
+    flights.forEach((f) => {
+      const c = f.connection;
+      row(App.airportBy(f), `<div class="guide">🕐 להיות בשדה התעופה<small>${f.international ? '3 שעות לפני טיסה בינלאומית' : 'שעתיים לפני טיסת פנים'}</small></div>`, 'עד');
+      row(App.localTime(f.legs[0].dep), flightLive(f) + fold('day', f.id, false, flightSummary(f), flightCard(f)) +
+        (c ? `<div class="guide ${c.terminalChange ? 'guide-warn' : ''}">🔁 קונקשן ב${esc(c.airport)} (${esc(c.duration)})${c.terminalChange ? ': צריך להחליף טרמינל' : ''}</div>` : ''), 'המראה');
+    });
+    const landed = flights.length ? App.localTime(flights[flights.length - 1].legs.slice(-1)[0].arr) : null;
+    const nextDayLanding = flights.length && App.localDate(flights[flights.length - 1].legs.slice(-1)[0].arr) !== date;
+    if (landed && !nextDayLanding) row(landed, `<div class="guide guide-ok">🛬 נחיתה ב${esc(flights[flights.length - 1].legs.slice(-1)[0].to.city || '')}</div>`, 'נחיתה');
+    post.forEach((t) => { row(t.time || null, transferFold(t), t.time ? t.timeLabel : ''); });
     if (tonight) {
       const mode = tonight.checkIn === date ? 'checkin' : 'tonight';
-      html += hotelGuide(tonight, mode) + hotelFold(tonight, mode);
+      const tm = App.hotelTimes(tonight);
+      const late = mode === 'checkin' && landed && !nextDayLanding && landed > tm.checkInTime;
+      if (mode === 'checkin') row(late ? null : tm.checkInTime, `<div class="guide">🛎️ צ'ק אין ${late ? 'כשמגיעים למלון' : 'במלון'}</div>` + hotelFold(tonight, mode), late ? '' : 'החל מ');
+      else row(null, hotelFold(tonight, mode), '');
     }
+    // Tomorrow's flight: online check-in opens 24 hours before.
+    App.flightsOn(App.addDays(date, 1)).forEach((f) => { row(App.localTime(f.legs[0].dep), checkinReminder(f), 'צ\'ק אין'); });
+
+    // Keep timed rows in time order; an untimed row stays right after the row before it.
+    let last = '00:00';
+    rows.forEach((r, i) => { r.sort = r.time || last; r.i = i; last = r.sort; });
+    rows.sort((a, b) => a.sort.localeCompare(b.sort) || a.i - b.i);
+    // On the real today: what already happened fades, and the next thing gets a highlight.
+    if (isToday) {
+      const n = App.now(), hm = `${String(n.getHours()).padStart(2, '0')}:${String(n.getMinutes()).padStart(2, '0')}`;
+      const next = rows.find((r) => r.time && r.time >= hm);
+      rows.forEach((r) => { if (r.sort < hm && r !== next && (!next || r.sort < next.sort)) r.cls = 'tl-past'; });
+      if (next) { next.cls = 'tl-next'; next.label = 'הבא'; }
+    }
+    html += `<ol class="day-tl">${rows.map((r) => `<li class="${r.time ? '' : 'no-time'} ${r.cls || ''}">
+      <div class="tl-time">${r.time ? `<b>${r.time}</b>${r.label ? `<small>${esc(r.label)}</small>` : ''}` : ''}</div>
+      <div class="tl-body">${r.html}</div></li>`).join('')}</ol>`;
+
     if (attrs.length) {
       html += `<h2 class="section-h">🌴 מה אפשר לעשות היום</h2>`;
       attrs.forEach((a) => { html += attractionCard(a, true); });
@@ -360,13 +414,17 @@
     hotelSummary(h) + (mode === 'tonight' ? '<div class="tag fold-tag">🌙 כאן ישנים הלילה</div>' : ''),
     hotelCard(h, mode, { noBanner: true }), `style="--accent:${App.place(h.place).color}"`);
 
+  // "יוצאים לדרך! תל אביב ← דובאי" → a small tag "יוצאים לדרך!" over the route.
+  const splitTitle = (t) => { const m = String(t).match(/^(.*?!)\s*(.*)$/); return m ? [m[1], m[2]] : ['', t]; };
   const flightSummary = (f) => {
     const first = f.legs[0], last = f.legs[f.legs.length - 1];
     const nextDay = App.localDate(last.arr) !== App.localDate(first.dep);
-    return `<div class="card-title"><span class="ico ico-blue">✈️</span><h3>${esc(f.title)}</h3></div>
+    const [tag, route] = splitTitle(f.title);
+    return `<div class="card-title"><span class="ico ico-blue">✈️</span><h3>${tag ? `<span class="title-tag">${esc(tag)}</span>` : ''}${esc(route)}</h3></div>
       <div class="fold-line"><span>📅 ${App.weekday(f.date)} <bdi>${App.shortDate(f.date)}</bdi></span>
-        <span>🛫 <b>${App.localTime(first.dep)}</b></span>
-        <span>🛬 <b>${App.localTime(last.arr)}</b>${nextDay ? '<sup>+1</sup>' : ''}</span></div>
+        <span>המראה <b>${App.localTime(first.dep)}</b></span>
+        <span>נחיתה <b>${App.localTime(last.arr)}</b>${nextDay ? '<sup>+1</sup>' : ''}</span></div>
+      <div class="fold-sub"><bdi>${f.legs.map((l) => esc(l.flightNo)).join(' · ')}</bdi></div>
 `;
   };
 
@@ -412,7 +470,7 @@
     const sel = placeKey || (order.includes(current) ? current : order[0]);
     return `<h1 class="page-h">🌴 אטרקציות</h1>
       <div class="tabs">${order.map((k) => `<a class="tab ${k === sel ? 'on' : ''}" href="#/attractions/${k}" style="--accent:${App.place(k).color}">${esc(App.place(k).name)}</a>`).join('')}</div>
-      ${T.attractions.filter((a) => a.place === sel).map((a) => attractionCard(a)).join('')}`;
+      ${T.attractions.filter((a) => a.place === sel).sort((a, b) => App.isDone(a.id) - App.isDone(b.id)).map((a) => attractionCard(a)).join('')}`;
   };
 
   const routeView = () => {
@@ -443,6 +501,7 @@
     const T = App.trip, I = T.info;
     const wa = T.contact.whatsapp ? `https://wa.me/${T.contact.whatsapp.replace(/\D/g, '')}` : null;
     return `<h1 class="page-h">ℹ️ מידע חשוב</h1>
+      <div class="text-size text-size-top"><span>גודל טקסט</span><button data-font="-1">א-</button><button data-font="1">א+</button><button class="font-reset" data-font="0">רגיל</button></div>
       ${wa ? `<a class="btn btn-wide btn-wa" href="${wa}" target="_blank" rel="noopener">💬 וואטסאפ ל${esc(T.contact.name)}</a>` : ''}
       ${App.canInstall() ? `<section class="card"><div class="card-title"><span class="ico ico-teal">📲</span><h3>התקנה במסך הבית</h3></div>${App.installCard(false)}</section>` : ''}
       ${App.pushAvailable() ? `<section class="card"><div class="card-title"><span class="ico ico-orange">🔔</span><h3>התראות</h3></div>${pushCard(false)}</section>` : ''}
@@ -460,7 +519,6 @@
         <p>💵 המטבע: ${esc(I.currency.name)} (להמרה: כפתור 💱)</p></section>
       ${checklistCard('before', '📝', 'ico-blue', 'לפני הטיול')}
       ${checklistCard('packing', '🧳', 'ico-orange', 'רשימת אריזה')}
-      <div class="text-size"><span>גודל טקסט</span><button data-font="-1">א-</button><button data-font="1">א+</button><button class="font-reset" data-font="0">ברירת מחדל</button></div>
       ${App.user ? `<p class="muted center">מחוברים בתור ${esc(App.user.email)} · <a href="#" data-signout>התנתקות</a></p>` : ''}
       ${App.role === 'admin' ? '<a class="btn btn-wide" href="#/admin">⚙️ ניהול נתונים</a>' : ''}`;
   };
