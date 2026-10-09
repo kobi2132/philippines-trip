@@ -7,7 +7,7 @@ on:
   workflow_dispatch:
     inputs:
       test:
-        description: 'Send a test notification to every registered phone'
+        description: 'Send a test notification to every registered phone and to Telegram'
         type: boolean
         default: false
 
@@ -25,6 +25,8 @@ jobs:
     env:
       FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
       AERODATABOX_KEY: ${{ secrets.AERODATABOX_KEY }}
+      TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+      TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
       TEST_PUSH: ${{ inputs.test && '1' || '' }}
     steps:
       - uses: actions/checkout@v4

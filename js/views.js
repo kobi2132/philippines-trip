@@ -61,8 +61,8 @@
       </div>
       <div class="facts">
         <div class="fact"><span>🚪 שער</span><b>${s.gate ? esc(s.gate) : 'יפורסם בשדה'}</b></div>
-        <div class="fact"><span>🎫 בורדינג</span><b>${s.boarding ? esc(s.boarding) : App.minusMinutes(App.localTime(leg.dep), 45) + ' בערך'}</b></div>
-        <div class="fact"><span>🔒 נסגר</span><b>${App.minusMinutes(App.localTime(leg.dep), 20)} בערך</b></div>
+        <div class="fact"><span>🎫 בורדינג</span><b>${s.boarding ? esc(s.boarding) : App.minusMinutes(s.depLocal || App.localTime(leg.dep), 45) + ' בערך'}</b></div>
+        <div class="fact"><span>🔒 נסגר</span><b>${App.minusMinutes(s.depLocal || App.localTime(leg.dep), 20)} בערך</b></div>
       </div>
       <a class="link-small" href="https://www.flightradar24.com/data/flights/${esc(leg.flightNo.toLowerCase())}" target="_blank" rel="noopener">📡 מעקב חי אחרי הטיסה</a>
     </div>`;

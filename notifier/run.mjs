@@ -1,9 +1,11 @@
 // Runs every 15 minutes from GitHub Actions (.github/workflows/notifier.yml).
-// Env: FIREBASE_SERVICE_ACCOUNT (JSON), AERODATABOX_KEY (optional), TRIP_ID, TEST_PUSH=1 for a test message.
+// Env: FIREBASE_SERVICE_ACCOUNT (JSON), AERODATABOX_KEY (optional), TELEGRAM_BOT_TOKEN + TELEGRAM_CHAT_ID (optional),
+// TRIP_ID, TEST_PUSH=1 for a test message.
 import { initializeApp, cert } from 'firebase-admin/app';
 import { getFirestore, FieldValue } from 'firebase-admin/firestore';
 import { getMessaging } from 'firebase-admin/messaging';
-import { dueReminders, legsToCheck, flightChangeAlert } from './schedule.mjs';
+import { dueReminders, legsToCheck, flightChangeAlert, dueTelegram } from './schedule.mjs';
+import { telegram, telegramOn } from './telegram.mjs';
 import { fetchLegStatus } from './flights.mjs';
 
 const SITE = 'https://kobi2132.github.io/philippines-trip/';
@@ -43,6 +45,7 @@ if (!trip) { console.log('trip not found'); process.exit(0); }
 
 if (process.env.TEST_PUSH === '1') {
   await push('🔔 בדיקת התראות', 'אם רואים את זה, ההתראות של אפליקציית הטיול עובדות!');
+  await telegram('🔔 בדיקה: הבוט של אפליקציית הטיול מחובר ויעדכן אותך כאן.');
   process.exit(0);
 }
 
@@ -57,6 +60,13 @@ for (const r of dueReminders(trip, now, sent)) {
   sent[r.key] = now.toISOString();
 }
 
+// 1b. Telegram reminders for Jacob (check-in 24h before, flight day morning).
+if (telegramOn()) {
+  for (const r of dueTelegram(trip, now, sent)) {
+    if (await telegram(r.text)) sent[r.key] = now.toISOString();
+  }
+}
+
 // 2. Live flight status, and a push when something important changes.
 const apiKey = process.env.AERODATABOX_KEY;
 const live = {};
@@ -68,14 +78,19 @@ if (apiKey) {
       if (!s) continue;
       live[key] = s;
       const alert = flightChangeAlert(leg, notified[key], s);
-      if (alert) await push(alert.title, alert.body, `#/day/${leg.dep.slice(0, 10)}`);
+      if (alert) {
+        await push(alert.title, alert.body, `#/day/${leg.dep.slice(0, 10)}`);
+        await telegram(`<b>${alert.title}</b>\n${alert.body}`);
+      }
       notified[key] = { status: s.status, depLocal: s.depLocal, gate: s.gate };
     } catch (e) {
       console.error(e.message);
+      // Tell Jacob when checking flights fails, at most every 6 hours.
+      if (now.getTime() - (state.tgErrorAt || 0) > 6 * 3600e3 && await telegram(`⚠️ בדיקת הטיסות נכשלה: ${e.message}`)) state.tgErrorAt = now.getTime();
     }
   }
 }
 
 if (Object.keys(live).length) await flightsRef.set({ legs: live, updatedAt: FieldValue.serverTimestamp() }, { merge: true });
-await stateRef.set({ sent, lastChecked, notified, ranAt: now.toISOString() });
+await stateRef.set({ sent, lastChecked, notified, tgErrorAt: state.tgErrorAt || 0, ranAt: now.toISOString() });
 console.log('done', now.toISOString());

@@ -114,4 +114,43 @@ export function flightChangeAlert(leg, prev, next) {
   return null;
 }
 
+// Online check-in sites, by the airline code of the booking's first flight.
+export const CHECKIN = {
+  FZ: 'https://www.flydubai.com/en/flying-with-us/check-in/online-check-in/',
+  PR: 'https://www.philippineairlines.com/ph/en/check-in-online.html',
+  '5J': 'https://book.cebupacificair.com/Checkin/Retrieve',
+  DG: 'https://book.cebupacificair.com/Checkin/Retrieve',
+};
+
+const route = (f) => `${f.legs[0].from.city || f.legs[0].from.code} ← ${f.legs[f.legs.length - 1].to.city || f.legs[f.legs.length - 1].to.code}`;
+
+// Messages for Jacob on Telegram: { key, at (Date), text }.
+// 24h before each flight: check-in with the link and booking code. Flight day morning: when to be at the airport.
+export function telegramReminders(trip) {
+  const out = [];
+  for (const f of trip.flights) {
+    const first = f.legs[0];
+    const dep = new Date(first.dep);
+    const link = CHECKIN[first.flightNo.slice(0, 2)];
+    out.push({ key: `tg_checkin_${f.date}_${first.flightNo}`, at: new Date(dep.getTime() - 24 * 3600e3),
+      text: `✅ <b>צ'ק אין פתוח</b> לטיסה של ${trip.travelers}\n${route(f)} · ${first.flightNo} · ${shortDate(f.date)} ב-${localTime(first.dep)}\nמספר הזמנה: <code>${f.booking}</code>${link ? `\n${link}` : ''}` });
+    const tz = tzOfDeparture(f);
+    const morning = plannedReminders(trip).find((r) => r.key === `morning_${f.date}`);
+    if (morning) {
+      out.push({ key: `tg_day_${f.date}`, at: zonedTime(morning.date, morning.time, tz),
+        text: `✈️ <b>היום טסים</b>: ${route(f)}\n${first.flightNo} ב-${localTime(first.dep)}. להיות בשדה עד <b>${airportBy(f)}</b>. הזמנה <code>${f.booking}</code>` });
+    }
+  }
+  return out;
+}
+
+// Due now: its time has passed, within a 4-hour grace window, not yet sent.
+export function dueTelegram(trip, now, sent = {}) {
+  return telegramReminders(trip).filter((r) => !sent[r.key] && now >= r.at && now - r.at < 4 * 3600e3);
+}
+
+// A wall-clock time in a zone as a Date (the trip's zones have no DST in November).
+const OFFSET = { 'Asia/Jerusalem': '+02:00', 'Asia/Manila': '+08:00' };
+const zonedTime = (date, hm, tz) => new Date(`${date}T${hm}:00${OFFSET[tz] || '+00:00'}`);
+
 export const _test = { toMin, fromMin, addDays, shortDate };
