@@ -173,6 +173,7 @@
     if (t.matches('.arrow.off')) { e.preventDefault(); return; }
     if (t.hasAttribute('data-fx')) {
       document.body.insertAdjacentHTML('beforeend', App.fxModal());
+      App.fitFxModal();
       document.getElementById('fx-php').focus();
     } else if (t.hasAttribute('data-install')) {
       App.promptInstall();

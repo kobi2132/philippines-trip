@@ -29,14 +29,14 @@
   App.fxModal = () => {
     const rate = App.fxRate();
     const date = App.fxRateDate();
-    const rows = [100, 500, 1000, 5000].map((p) => `<tr><td><bdi>${p.toLocaleString('he-IL')}</bdi> פזו</td><td><b>${fmt(p * rate)}</b> ₪</td></tr>`).join('');
+    const rows = [100, 500].map((p) => `<tr><td><bdi>${p.toLocaleString('he-IL')}</bdi> פזו</td><td><b>${fmt(p * rate)}</b> ₪</td></tr>`).join('');
     return `
     <div class="modal fx-modal" data-close>
       <div class="modal-box fx-box" dir="rtl">
         <div class="hero-emoji">💱</div>
         <h2>המרת כספים</h2>
-        <label class="fx-field"><span>פזו</span><input type="number" inputmode="decimal" id="fx-php" placeholder="0"></label>
-        <label class="fx-field"><span>שקלים ₪</span><input type="number" inputmode="decimal" id="fx-ils" placeholder="0"></label>
+        <label class="fx-field"><span>פזו</span><input type="text" inputmode="numeric" pattern="[0-9]*" autocomplete="off" id="fx-php" placeholder="0"></label>
+        <label class="fx-field"><span>שקלים ₪</span><input type="text" inputmode="numeric" pattern="[0-9]*" autocomplete="off" id="fx-ils" placeholder="0"></label>
         <table class="fx-table">${rows}</table>
         <p class="muted">${date ? `שער מעודכן ל-<bdi>${App.shortDate(date)}</bdi>` : 'שער משוער'}: 100 פזו ≈ ${fmt(100 * rate)} ₪</p>
         <button class="btn btn-wide" data-close>סגירה</button>
@@ -45,8 +45,25 @@
   };
 
   document.addEventListener('input', (e) => {
+    if (e.target.id !== 'fx-php' && e.target.id !== 'fx-ils') return;
+    e.target.value = e.target.value.replace(/\D/g, '');
     const rate = App.fxRate();
     if (e.target.id === 'fx-php') document.getElementById('fx-ils').value = e.target.value ? fmt(Number(e.target.value) * rate).replace(/,/g, '') : '';
     if (e.target.id === 'fx-ils') document.getElementById('fx-php').value = e.target.value ? Math.round(Number(e.target.value) / rate) : '';
   });
+
+  // The on-screen keyboard covers the bottom of the screen: keep the converter in the part still visible.
+  const fitToKeyboard = () => {
+    const m = document.querySelector('.fx-modal');
+    const vv = window.visualViewport;
+    if (!m || !vv) return;
+    m.style.top = vv.offsetTop + 'px';
+    m.style.height = vv.height + 'px';
+    m.style.bottom = 'auto';
+  };
+  if (window.visualViewport) {
+    visualViewport.addEventListener('resize', fitToKeyboard);
+    visualViewport.addEventListener('scroll', fitToKeyboard);
+  }
+  App.fitFxModal = fitToKeyboard;
 })(window.App);
