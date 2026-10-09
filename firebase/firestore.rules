@@ -1,11 +1,10 @@
 rules_version = '2';
 // Paste into Firebase console → Firestore Database → Rules.
-// Replace ADMIN_EMAIL@gmail.com with the admin's Gmail (same as js/config.js).
 service cloud.firestore {
   match /databases/{database}/documents {
     function email() { return request.auth.token.email.lower(); }
     function signedIn() { return request.auth != null && request.auth.token.email_verified == true; }
-    function isAdmin() { return signedIn() && email() in ['ADMIN_EMAIL@gmail.com']; }
+    function isAdmin() { return signedIn() && email() in ['kobi2132@gmail.com']; }
     function tripDoc(tripId) { return get(/databases/$(database)/documents/trips/$(tripId)); }
     function isMember(tripId) { return signedIn() && email() in tripDoc(tripId).data.members; }
 
