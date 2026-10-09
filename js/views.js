@@ -434,7 +434,7 @@
       <section class="card"><div class="card-title"><span class="ico ico-green">💵</span><h3>כסף</h3></div>
         <p>המטבע: ${esc(I.currency.name)} (${esc(I.currency.code)})</p>
         <label class="calc">💱 <input type="number" inputmode="decimal" id="php" placeholder="פזו"> פזו ≈ <b id="ils">0</b> ₪</label>
-        <p class="muted">שער משוער: 100 פזו ≈ ${Math.round(I.currency.approxIls * 100)} ₪</p></section>
+        <p class="muted">${App.fxRateDate() ? 'שער עדכני' : 'שער משוער'}: 100 פזו ≈ ${Math.round(App.fxRate() * 100)} ₪</p></section>
       <section class="card"><div class="card-title"><span class="ico ico-purple">🕐</span><h3>שעון ושקעים</h3></div>
         <p>${esc(I.timeDiff)}</p><p>🔌 ${esc(I.plug)}</p></section>
       <section class="card"><div class="card-title"><span class="ico ico-blue">📝</span><h3>לפני הטיול</h3></div>${checklist('before', T.checklists.before)}</section>

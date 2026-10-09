@@ -284,3 +284,18 @@ small { font-size: .78rem; }
 .guide-checkin { display: flex; align-items: center; gap: 10px; background: #f0fdf4; color: #166534; }
 .guide-checkin span { flex: 1; }
 .guide-checkin .copy { margin: 0; white-space: nowrap; }
+
+/* currency converter: floating button + sheet */
+.fx-fab { position: fixed; left: 14px; bottom: calc(76px + env(safe-area-inset-bottom)); z-index: 30; width: 52px; height: 52px; border-radius: 50%;
+  border: 0; background: #fff; box-shadow: 0 4px 14px rgba(15, 23, 42, .22); font-size: 1.6rem; display: grid; place-items: center; cursor: pointer; }
+body:has(#update-bar) .fx-fab, body:has(.modal) .fx-fab { display: none; }
+.fx-box { direction: rtl; text-align: right; }
+.fx-box .hero-emoji { text-align: center; font-size: 2.6rem; line-height: 1.1; }
+.fx-box h2 { margin-bottom: 12px; text-align: center; }
+.fx-field { display: flex; align-items: center; gap: 10px; margin: 8px 0; font-weight: 600; }
+.fx-field span { width: 5.5rem; text-align: right; }
+.fx-field input { flex: 1; min-width: 0; width: 100%; font: inherit; font-size: 1.4rem; font-weight: 700; padding: 10px 12px; border-radius: 12px; border: 2px solid var(--line); direction: ltr; text-align: left; }
+.fx-table { width: 100%; border-collapse: collapse; margin: 12px 0 4px; }
+.fx-table td { padding: 6px 4px; border-top: 1px solid var(--line); text-align: right; }
+.fx-table td:last-child { text-align: left; }
+.fx-field input::-webkit-inner-spin-button, .fx-field input::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
