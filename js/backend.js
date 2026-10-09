@@ -108,7 +108,7 @@
     async enablePush() {
       if (!cfg.vapidKey) throw new Error('vapid key missing');
       const perm = await Notification.requestPermission();
-      if (perm !== 'granted') return false;
+      if (perm !== 'granted') return perm;
       const { fsMod, db, auth } = fb;
       const msgMod = await import(SDK + 'firebase-messaging.js');
       const messaging = msgMod.getMessaging();
@@ -119,7 +119,7 @@
         token, email: App.user.email, userAgent: navigator.userAgent.slice(0, 200), updatedAt: fsMod.serverTimestamp(),
       });
       App.store.set('push_on', true);
-      return true;
+      return 'granted';
     },
 
     async loadForAdmin() {
