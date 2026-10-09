@@ -77,6 +77,7 @@
     return `<h1 class="page-h">⚙️ ניהול נתונים</h1>
       ${empty ? '<p>הטיול עוד לא קיים במסד הנתונים. הדביקו את trip.json ושמרו.</p>' : ''}
       <p class="muted">משתמשים: admin (הכל), traveler (צפייה + סימונים), viewer (צפייה בלבד).</p>
+      <label class="btn btn-wide admin-file">📂 טעינה מקובץ<input type="file" accept=".json,application/json" id="admin-file" hidden></label>
       <label class="admin-label">משתמשים<textarea id="admin-members" rows="6" dir="ltr"></textarea></label>
       <label class="admin-label">נתוני הטיול (trip.json)<textarea id="admin-data" rows="18" dir="ltr"></textarea></label>
       <button class="btn btn-wide" data-admin-save>💾 שמירה</button>
@@ -152,6 +153,20 @@
     if (t.dataset.check) {
       const key = 'check_' + t.dataset.check;
       const s = App.store.get(key, {}); s[t.dataset.i] = t.checked; App.store.set(key, s);
+    }
+  });
+
+  // Admin: load a trip.json, or an import file shaped { members, data }.
+  document.addEventListener('change', async (e) => {
+    if (e.target.id !== 'admin-file' || !e.target.files[0]) return;
+    try {
+      const j = JSON.parse(await e.target.files[0].text());
+      const data = j.data || j;
+      document.getElementById('admin-data').value = JSON.stringify(data, null, 2);
+      if (j.members) document.getElementById('admin-members').value = JSON.stringify(j.members, null, 2);
+      document.getElementById('admin-msg').textContent = '📂 הקובץ נטען. בדקו ולחצו שמירה.';
+    } catch (err) {
+      document.getElementById('admin-msg').textContent = '❌ הקובץ לא תקין: ' + err.message;
     }
   });
 
