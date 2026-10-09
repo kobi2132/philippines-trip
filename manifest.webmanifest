@@ -1,16 +1,30 @@
 {
+  "id": "./?app=philippines-2026",
   "name": "הטיול לפיליפינים",
   "short_name": "פיליפינים",
   "lang": "he",
   "dir": "rtl",
-  "start_url": "./#/today",
+  "start_url": "./?app=philippines-2026#/today",
   "scope": "./",
   "display": "standalone",
   "background_color": "#fffbf5",
   "theme_color": "#0e7490",
   "icons": [
-    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png" },
-    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png" },
-    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+    {
+      "src": "icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    },
+    {
+      "src": "icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
   ]
 }
