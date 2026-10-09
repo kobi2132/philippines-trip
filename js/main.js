@@ -30,9 +30,15 @@
   };
 
   // When the day header scrolls away, a slim date + place bar takes its place at the top.
+  // A gap between the on and off points keeps the bar from flickering: the arrows row
+  // shrinks when the bar appears, which shifts the page by a few pixels.
+  let headGone = false;
   const onScroll = () => {
     const head = document.querySelector('.day-head');
-    document.body.classList.toggle('head-gone', !!head && head.getBoundingClientRect().bottom < 0);
+    const bottom = head ? head.getBoundingClientRect().bottom : Infinity;
+    if (!headGone && bottom < -30) headGone = true;
+    else if (headGone && bottom > 30) headGone = false;
+    document.body.classList.toggle('head-gone', headGone);
   };
   window.addEventListener('scroll', onScroll, { passive: true });
 
