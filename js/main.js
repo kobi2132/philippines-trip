@@ -130,8 +130,12 @@
     if (t.hasAttribute('data-push')) {
       t.disabled = true;
       try {
-        const ok = await App.backend.enablePush();
-        if (ok) App.render(); else document.getElementById('push-msg').textContent = 'לא אישרתם התראות. אפשר לנסות שוב.';
+        const res = await App.backend.enablePush();
+        if (res === 'granted') App.render();
+        else document.getElementById('push-msg').innerHTML = res === 'denied'
+          // Chrome answers "denied" without asking when the site or Chrome itself is blocked.
+          ? 'הטלפון חוסם התראות מהאתר הזה. כדי לפתוח: לוחצים על הסמל שמשמאל לכתובת האתר ← הרשאות ← התראות ← לאפשר. אם זה לא עוזר: הגדרות הטלפון ← אפליקציות ← Chrome ← התראות ← לאפשר.'
+          : 'חלון האישור נסגר בלי תשובה. לוחצים שוב ובוחרים "אישור".';
       } catch (err) {
         document.getElementById('push-msg').textContent = 'לא הצלחנו להפעיל התראות (' + (err.code || err.message) + ')';
       }
