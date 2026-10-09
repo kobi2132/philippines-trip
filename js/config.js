@@ -12,7 +12,7 @@ window.APP_CONFIG = {
     appId: '1:1008578466900:web:a6c16ad23596738d8a49c1',
   },
   // Firebase console → Project settings → Cloud Messaging → Web Push certificates (public key).
-  vapidKey: null,
+  vapidKey: 'BEYkO2WsUnTY8UDVMmaQBdMFo_xq0VICFGHOrjWgxMhzUg34CXdpUI3gwg2DenqaYF4f0lDjinyUPjb1GACojrw',
   // Who may create the trip from the admin screen before it exists (must match the rules).
   adminEmails: ['kobi2132@gmail.com'],
 };
