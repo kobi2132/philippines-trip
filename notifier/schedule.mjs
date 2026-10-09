@@ -81,10 +81,11 @@ export function dueReminders(trip, now, sent = {}) {
 }
 
 // How often to check a leg right now (ms), or null when it needs no check.
-// Every 12h from 4 days out; every 3h in the last day; every 20 min from 4h before take-off
+// Once a day before that for the first flight only (catches early schedule changes, ~2 requests a day);
+// every 12h from 4 days out; every 3h in the last day; every 20 min from 4h before take-off
 // (longer while a delayed flight hasn't left yet) and around landing until it has landed.
 const H = 3600e3, M = 60e3;
-export function pollEvery(leg, t, last) {
+export function pollEvery(leg, t, last, daily = false) {
   const status = last && last.status;
   if (status === 'landed' || status === 'cancelled') return null;
   const dep = new Date(leg.dep).getTime(), arr = new Date(leg.arr).getTime();
@@ -93,6 +94,7 @@ export function pollEvery(leg, t, last) {
   if (!airborne && t >= dep - 4 * H && t <= dep + 6 * H) return 20 * M;
   if (t >= dep - 24 * H && t < dep - 4 * H) return 3 * H;
   if (t >= dep - 4 * 24 * H && t < dep - 24 * H) return 12 * H;
+  if (daily && t < dep - 4 * 24 * H) return 24 * H;
   return null;
 }
 
@@ -100,13 +102,13 @@ export function pollEvery(leg, t, last) {
 export function legsToCheck(trip, now, lastChecked = {}, notified = {}) {
   const t = now.getTime();
   const res = [];
-  for (const f of trip.flights) {
+  trip.flights.forEach((f, i) => {
     for (const leg of f.legs) {
       const key = `${leg.flightNo}_${leg.dep.slice(0, 10)}`;
-      const every = pollEvery(leg, t, notified[key]);
+      const every = pollEvery(leg, t, notified[key], i === 0);
       if (every && t - (lastChecked[key] || 0) >= every - M) res.push({ key, leg });
     }
-  }
+  });
   return res;
 }
 

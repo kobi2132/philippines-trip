@@ -14,10 +14,6 @@ on:
         description: 'Send Jacob one sample of every Telegram message (nothing to the phones)'
         type: boolean
         default: false
-      probe:
-        description: 'Check whether flight data for the first flight is available (logs only)'
-        type: boolean
-        default: false
 
 concurrency:
   group: notifier
@@ -37,7 +33,6 @@ jobs:
       TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
       TEST_PUSH: ${{ inputs.test && '1' || '' }}
       TG_SAMPLES: ${{ inputs.samples && '1' || '' }}
-      PROBE: ${{ inputs.probe && '1' || '' }}
     steps:
       - uses: actions/checkout@v4
       - name: Skip until the Firebase key is set
