@@ -363,8 +363,8 @@
       if (v && v !== myVersion) {
         document.body.insertAdjacentHTML('beforeend', `
           <div id="update-bar" class="update-bar" role="status">
-            <span>✨ יש גרסה חדשה של האפליקציה</span>
-            <button class="btn" onclick="location.reload()">🔄 לעדכן עכשיו</button>
+            <span>✨ גרסה חדשה מוכנה</span>
+            <button class="btn" onclick="location.reload()">🔄 עדכון</button>
           </div>`);
       }
     } catch (e) { /* offline: try again later */ }

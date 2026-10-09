@@ -271,8 +271,8 @@ small { font-size: .78rem; }
 .install-help { text-align: right; direction: rtl; }
 .install-help ol { padding-right: 22px; margin: 12px 0; line-height: 1.6; }
 .install-help li { margin-bottom: 10px; }
-.update-bar { position: fixed; left: 12px; right: 12px; bottom: calc(70px + env(safe-area-inset-bottom)); z-index: 40; display: flex; align-items: center; justify-content: space-between; gap: 10px; background: #0f172a; color: #fff; border-radius: 18px; padding: 12px 14px; box-shadow: 0 8px 24px rgba(15, 23, 42, .3); font-weight: 600; }
-.update-bar .btn { background: #fbbf24; color: #0f172a; white-space: nowrap; margin: 0; }
+.update-bar { position: fixed; left: 12px; right: 12px; bottom: calc(70px + env(safe-area-inset-bottom)); z-index: 40; display: flex; align-items: center; justify-content: space-between; gap: 10px; background: #ecfeff; color: #155e75; border: 2px solid #67e8f9; border-radius: 18px; padding: 8px 8px 8px 8px; padding-inline-start: 14px; box-shadow: 0 6px 18px rgba(14, 116, 144, .18); font-weight: 700; white-space: nowrap; }
+.update-bar .btn { background: var(--teal); color: #fff; white-space: nowrap; margin: 0; min-height: 40px; padding: 6px 16px; }
 
 /* collapsible cards (flights / hotels lists) */
 .fold { padding: 0; overflow: hidden; }
