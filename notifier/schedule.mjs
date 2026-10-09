@@ -158,28 +158,29 @@ export const CHECKIN = {
   DG: 'https://book.cebupacificair.com/Checkin/Retrieve',
 };
 
-const route = (f) => `${f.legs[0].from.city || f.legs[0].from.code} ← ${f.legs[f.legs.length - 1].to.city || f.legs[f.legs.length - 1].to.code}`;
 
 // Messages for Jacob on Telegram: { key, at (Date), text }.
 // 24h before each flight: check-in with the link and booking code. Flight day morning: when to be at the airport.
 export function telegramReminders(trip) {
   const out = [];
   for (const f of trip.flights) {
-    const first = f.legs[0];
-    const dep = new Date(first.dep);
-    const link = CHECKIN[first.flightNo.slice(0, 2)];
-    out.push({ key: `tg_checkin_${f.date}_${first.flightNo}`, at: new Date(dep.getTime() - 24 * 3600e3),
-      text: lines(`✅ צ'ק אין פתוח: ${trip.travelers}`, [
-        ['טיסה', f.legs.map((l) => l.flightNo).join(' + ')], ['מסלול', route(f)], ['תאריך', shortDate(f.date)],
-        ['בשעה', localTime(first.dep)], ['הזמנה', `<code>${f.booking}</code>`], ["צ'ק אין", link]]) });
-    const tz = tzOfDeparture(f);
+    // A booking with a connection gets a message per flight.
     const morning = plannedReminders(trip).find((r) => r.key === `morning_${f.date}`);
-    if (morning) {
-      out.push({ key: `tg_day_${f.date}`, at: zonedTime(morning.date, morning.time, tz),
-        text: lines('✈️ היום טסים', [
-          ['טיסה', f.legs.map((l) => l.flightNo).join(' + ')], ['מסלול', route(f)], ['בשעה', localTime(first.dep)],
-          ['להיות בשדה עד', `<b>${airportBy(f)}</b>`], ['הזמנה', `<code>${f.booking}</code>`]]) });
-    }
+    f.legs.forEach((leg, i) => {
+      const link = CHECKIN[leg.flightNo.slice(0, 2)];
+      const part = f.legs.length > 1 ? ` (${i + 1} מתוך ${f.legs.length})` : '';
+      out.push({ key: `tg_checkin_${f.date}_${leg.flightNo}`, at: new Date(new Date(leg.dep).getTime() - 24 * 3600e3),
+        text: lines(`✅ צ'ק אין פתוח${part}`, [
+          ['טיסה', leg.flightNo], ['מסלול', legRoute(leg)], ['תאריך', shortDate(leg.dep.slice(0, 10))],
+          ['בשעה', localTime(leg.dep)], ['הזמנה', `<code>${f.booking}</code>`], ["צ'ק אין", link]]) });
+      if (morning) {
+        out.push({ key: i ? `tg_day_${f.date}_${i + 1}` : `tg_day_${f.date}`, at: zonedTime(morning.date, morning.time, tzOfDeparture(f)),
+          text: lines(`✈️ היום טסים${part}`, [
+            ['טיסה', leg.flightNo], ['מסלול', legRoute(leg)], ['תאריך', i ? shortDate(leg.dep.slice(0, 10)) : null], ['בשעה', localTime(leg.dep)],
+            i ? ['קונקשן ב', leg.from.city || leg.from.code] : ['להיות בשדה עד', `<b>${airportBy(f)}</b>`],
+            ['הזמנה', `<code>${f.booking}</code>`]]) });
+      }
+    });
   }
   return out;
 }

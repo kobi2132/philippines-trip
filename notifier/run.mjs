@@ -53,7 +53,7 @@ if (process.env.TEST_PUSH === '1') {
 if (process.env.TG_SAMPLES === '1') {
   const f = trip.flights[0], leg = f.legs[0];
   const sample = (text) => telegram(`🧪 <i>דוגמה</i>\n${text}`);
-  for (const r of telegramReminders(trip).filter((x) => x.key.endsWith(`${f.date}_${leg.flightNo}`) || x.key === `tg_day_${f.date}`)) await sample(r.text);
+  for (const r of telegramReminders(trip).filter((x) => x.key.startsWith(`tg_checkin_${f.date}_`) || x.key.startsWith(`tg_day_${f.date}`))) await sample(r.text);
   const alerts = [
     flightChangeAlert(leg, null, { status: 'delayed', depLocal: '11:25' }),
     flightChangeAlert(leg, null, { status: 'scheduled', depLocal: leg.dep.slice(11, 16), gate: 'B7' }),
