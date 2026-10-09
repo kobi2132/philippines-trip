@@ -195,7 +195,8 @@
     } else if (t.hasAttribute('data-close')) {
       if (e.target === t || t.tagName === 'BUTTON') document.querySelector('.modal')?.remove();
     } else if (t.dataset.font) {
-      const size = Math.min(24, Math.max(14, (App.store.get('font2', 16)) + Number(t.dataset.font) * 2));
+      const step = Number(t.dataset.font);
+      const size = step === 0 ? 16 : Math.min(24, Math.max(14, App.store.get('font2', 16) + step * 2));
       App.store.set('font2', size); document.documentElement.style.fontSize = size + 'px';
     } else if (t.hasAttribute('data-signin')) {
       try { await App.backend.signIn(); } catch (err) { document.getElementById('login-err').textContent = 'הכניסה לא הצליחה, נסו שוב (' + err.code + ')'; }

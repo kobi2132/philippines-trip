@@ -189,9 +189,10 @@ small { font-size: .78rem; }
 .hero-emoji { font-size: 2.8rem; }
 .hero h1 { font-size: 1.7rem; font-weight: 800; margin-top: 8px; }
 .hero > p { font-size: 1.05rem; margin: 6px 0; }
-.countdown { display: inline-flex; flex-direction: column; background: linear-gradient(135deg, #0e7490, #22c55e); color: #fff; border-radius: 28px; padding: 18px 40px; margin: 10px 0; box-shadow: var(--shadow); }
-.countdown b { font-size: 3.4rem; line-height: 1; font-weight: 800; }
-.countdown span { font-size: 1.1rem; }
+/* Countdown keeps its original (19px-base) size on purpose: Jacob likes it big. */
+.countdown { display: inline-flex; flex-direction: column; align-items: center; justify-content: center; aspect-ratio: 1; min-width: 11.5rem; background: linear-gradient(135deg, #0e7490, #22c55e); color: #fff; border-radius: 28px; padding: 16px; margin: 10px 0; box-shadow: var(--shadow); }
+.countdown b { font-size: 5rem; line-height: 1; font-weight: 800; }
+.countdown span { font-size: 1.55rem; }
 .hero-card { text-align: center; background: linear-gradient(135deg, #ecfeff, #fef3c7); }
 .hero-card h2 { font-size: 1.5rem; }
 .center-screen { text-align: center; padding: 60px 16px; }
@@ -213,7 +214,8 @@ small { font-size: .78rem; }
 .calc { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; font-size: 1.1rem; }
 .calc input { width: 120px; font: inherit; padding: 10px; border-radius: 12px; border: 2px solid var(--line); }
 .text-size { display: flex; align-items: center; justify-content: center; gap: 10px; margin: 20px 0; }
-.text-size button { font: inherit; font-weight: 700; width: 56px; height: 48px; border-radius: 12px; border: 2px solid var(--line); background: var(--card); }
+.text-size { flex-wrap: wrap; }
+.text-size button { font: inherit; font-weight: 700; min-width: 56px; padding: 0 12px; height: 48px; border-radius: 12px; border: 2px solid var(--line); background: var(--card); }
 .admin-label { display: block; font-weight: 600; margin-top: 12px; }
 .admin-label textarea { width: 100%; font-family: ui-monospace, Menlo, monospace; font-size: 13px; border-radius: 12px; border: 2px solid var(--line); padding: 8px; }
 
@@ -259,9 +261,10 @@ small { font-size: .78rem; }
 .fold-line sup { color: var(--orange); font-size: .7rem; }
 .fold-alert { margin-top: 6px; color: #9a3412; background: var(--warn-bg); border-radius: 10px; padding: 4px 10px; font-weight: 600; font-size: .9rem; }
 .fold-btn { position: absolute; top: 14px; left: 12px; width: 32px; height: 32px; border-radius: 50%; background: #f1f5f9; display: grid; place-items: center; color: var(--teal); font-weight: 700; }
-.fold-btn::before { content: '⌄'; font-size: 1.2rem; line-height: 1; margin-top: -6px; }
-.fold[open] .fold-btn::before { content: '⌃'; margin-top: 6px; }
+.fold-btn::before { content: ''; width: 9px; height: 9px; border: solid var(--teal); border-width: 0 2.5px 2.5px 0; transform: translateY(-2px) rotate(45deg); transition: transform .2s; }
+.fold[open] .fold-btn::before { transform: translateY(2px) rotate(-135deg); }
 .fold[open] > summary { border-bottom: 1px solid var(--line); }
 /* the full card inside: no second frame or title */
 .fold > .card { margin: 0; border: 0; box-shadow: none; border-radius: 0; }
 .fold > .card > .card-title { display: none; }
+.text-size .font-reset { font-weight: 500; font-size: .9rem; }
