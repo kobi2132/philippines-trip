@@ -33,7 +33,8 @@
     return `
     <div class="modal fx-modal" data-close>
       <div class="modal-box fx-box" dir="rtl">
-        <h2>💱 המרת כספים</h2>
+        <div class="hero-emoji">💱</div>
+        <h2>המרת כספים</h2>
         <label class="fx-field"><span>פזו</span><input type="number" inputmode="decimal" id="fx-php" placeholder="0"></label>
         <label class="fx-field"><span>שקלים ₪</span><input type="number" inputmode="decimal" id="fx-ils" placeholder="0"></label>
         <table class="fx-table">${rows}</table>
