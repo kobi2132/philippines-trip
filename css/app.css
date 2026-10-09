@@ -34,16 +34,17 @@ p { margin: .5rem 0; }
 small { font-size: .78rem; }
 
 /* ---------- day header & navigation ---------- */
+/* The colored day header keeps its original (19px-base) size on purpose: Jacob likes it big. */
 .day-head {
   background: linear-gradient(135deg, var(--accent), color-mix(in srgb, var(--accent) 60%, #0ea5e9));
-  color: #fff; border-radius: var(--radius); padding: 14px 16px 12px; margin-top: 4px;
+  color: #fff; border-radius: var(--radius); padding: 18px 20px 16px; margin-top: 4px;
   box-shadow: var(--shadow);
 }
-.day-head h1 { font-size: 1.5rem; font-weight: 800; }
-.day-head h1 span { font-weight: 500; font-size: 1.05rem; opacity: .95; }
-.day-count { font-size: .85rem; opacity: .9; font-weight: 500; }
-.day-date { font-size: 1rem; margin-top: 2px; }
-.weather:not(:empty) { margin-top: 8px; display: inline-block; background: rgba(255,255,255,.22); padding: 4px 12px; border-radius: 999px; font-size: .9rem; }
+.day-head h1 { font-size: 2rem; font-weight: 800; }
+.day-head h1 span { font-weight: 500; font-size: 1.36rem; opacity: .95; }
+.day-count { font-size: 1rem; opacity: .9; font-weight: 500; }
+.day-date { font-size: 1.2rem; margin-top: 2px; }
+.weather:not(:empty) { margin-top: 8px; display: inline-block; background: rgba(255,255,255,.22); padding: 4px 12px; border-radius: 999px; font-size: 1.05rem; }
 .wx-ico { font-size: 1.1rem; }
 
 /* Slim bar that replaces the header once it scrolls away; the day arrows stick right below it. */
