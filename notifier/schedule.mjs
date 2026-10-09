@@ -81,7 +81,7 @@ export function dueReminders(trip, now, sent = {}) {
 }
 
 // How often to check a leg right now (ms), or null when it needs no check.
-// Every 12h from 5 days out; every 3h in the last day; every 20 min from 4h before take-off
+// Every 12h from 4 days out; every 3h in the last day; every 20 min from 4h before take-off
 // (longer while a delayed flight hasn't left yet) and around landing until it has landed.
 const H = 3600e3, M = 60e3;
 export function pollEvery(leg, t, last) {
@@ -92,7 +92,7 @@ export function pollEvery(leg, t, last) {
   if (t >= arr - 30 * M && t <= arr + 3 * H) return 20 * M;
   if (!airborne && t >= dep - 4 * H && t <= dep + 6 * H) return 20 * M;
   if (t >= dep - 24 * H && t < dep - 4 * H) return 3 * H;
-  if (t >= dep - 5 * 24 * H && t < dep - 24 * H) return 12 * H;
+  if (t >= dep - 4 * 24 * H && t < dep - 24 * H) return 12 * H;
   return null;
 }
 
