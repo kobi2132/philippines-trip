@@ -46,7 +46,28 @@ small { font-size: .78rem; }
 .weather:not(:empty) { margin-top: 8px; display: inline-block; background: rgba(255,255,255,.22); padding: 4px 12px; border-radius: 999px; font-size: .9rem; }
 .wx-ico { font-size: 1.1rem; }
 
-.day-nav { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin: 12px 0 4px; }
+/* Slim bar that replaces the header once it scrolls away; the day arrows stick right below it. */
+.day-mini {
+  position: fixed; top: 0; left: 0; right: 0; z-index: 20;
+  background: linear-gradient(135deg, var(--accent), color-mix(in srgb, var(--accent) 60%, #0ea5e9));
+  color: #fff; padding-top: env(safe-area-inset-top); box-shadow: var(--shadow);
+  transform: translateY(-110%); transition: transform .2s;
+}
+.day-mini > div {
+  max-width: 640px; margin: 0 auto; padding: 0 16px; height: 44px;
+  display: flex; align-items: center; justify-content: space-between; gap: 10px; font-size: .95rem;
+}
+.day-mini b { font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.day-mini span { white-space: nowrap; opacity: .95; }
+.head-gone .day-mini { transform: none; }
+.day-nav {
+  display: flex; align-items: center; justify-content: space-between; gap: 10px; margin: 4px 0 4px; padding: 8px 0;
+  position: sticky; top: 0; z-index: 10; background: var(--bg); transition: top .2s;
+}
+.head-gone .day-nav { top: calc(44px + env(safe-area-inset-top)); padding: 6px 0; }
+.head-gone .day-nav .arrow { height: 40px; width: 48px; font-size: 1.4rem; border-radius: 12px; }
+.head-gone .today-btn { height: 40px; font-size: 1rem; border-radius: 12px; }
+.day-nav .arrow, .today-btn { transition: height .2s, width .2s, font-size .2s; }
 .day-nav .arrow {
   width: 60px; height: 56px; border-radius: 16px; background: var(--card); box-shadow: var(--shadow);
   display: grid; place-items: center; font-size: 1.8rem; text-decoration: none; color: var(--teal); font-weight: 700;
@@ -56,6 +77,7 @@ small { font-size: .78rem; }
   flex: 1; height: 56px; border-radius: 16px; background: var(--teal); color: #fff; text-decoration: none;
   display: grid; place-items: center; font-weight: 700; font-size: 1.1rem;
 }
+.today-btn.is-today { background: #ccfbf1; color: var(--teal); }
 .other-day, .preview-banner, .msg-banner {
   background: #fef3c7; color: #92400e; border-radius: 14px; padding: 10px 14px; margin: 4px 0 10px; font-weight: 500;
 }
