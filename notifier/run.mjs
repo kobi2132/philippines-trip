@@ -4,7 +4,7 @@
 import { initializeApp, cert } from 'firebase-admin/app';
 import { getFirestore, FieldValue } from 'firebase-admin/firestore';
 import { getMessaging } from 'firebase-admin/messaging';
-import { dueReminders, legsToCheck, flightChangeAlert, dueTelegram } from './schedule.mjs';
+import { dueReminders, legsToCheck, flightChangeAlert, landedAlert, dueTelegram } from './schedule.mjs';
 import { telegram, telegramOn } from './telegram.mjs';
 import { fetchLegStatus } from './flights.mjs';
 
@@ -71,7 +71,7 @@ if (telegramOn()) {
 const apiKey = process.env.AERODATABOX_KEY;
 const live = {};
 if (apiKey) {
-  for (const { key, leg } of legsToCheck(trip, now, lastChecked)) {
+  for (const { key, leg } of legsToCheck(trip, now, lastChecked, notified)) {
     try {
       const s = await fetchLegStatus(leg, apiKey);
       lastChecked[key] = now.getTime();
@@ -82,6 +82,8 @@ if (apiKey) {
         await push(alert.title, alert.body, `#/day/${leg.dep.slice(0, 10)}`);
         await telegram(`<b>${alert.title}</b>\n${alert.body}`);
       }
+      const landed = landedAlert(leg, notified[key], s);
+      if (landed) await telegram(landed);
       notified[key] = { status: s.status, depLocal: s.depLocal, gate: s.gate };
     } catch (e) {
       console.error(e.message);

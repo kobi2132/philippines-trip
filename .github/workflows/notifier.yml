@@ -2,8 +2,8 @@ name: Flight status and reminders
 
 on:
   schedule:
-    # Every 15 minutes during October and November (UTC).
-    - cron: '*/15 * * 10,11 *'
+    # Every 5 minutes during October and November (UTC); each run decides what is due.
+    - cron: '*/5 * * 10,11 *'
   workflow_dispatch:
     inputs:
       test:

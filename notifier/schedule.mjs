@@ -80,21 +80,41 @@ export function dueReminders(trip, now, sent = {}) {
   });
 }
 
-// Legs to poll now. Near departure (6h before until 1h after landing) every 25 min; a day out, every 6h.
-export function legsToCheck(trip, now, lastChecked = {}) {
+// How often to check a leg right now (ms), or null when it needs no check.
+// Every 12h from 5 days out; every 3h in the last day; every 20 min from 4h before take-off
+// (longer while a delayed flight hasn't left yet) and around landing until it has landed.
+const H = 3600e3, M = 60e3;
+export function pollEvery(leg, t, last) {
+  const status = last && last.status;
+  if (status === 'landed' || status === 'cancelled') return null;
+  const dep = new Date(leg.dep).getTime(), arr = new Date(leg.arr).getTime();
+  const airborne = status === 'departed';
+  if (t >= arr - 30 * M && t <= arr + 3 * H) return 20 * M;
+  if (!airborne && t >= dep - 4 * H && t <= dep + 6 * H) return 20 * M;
+  if (t >= dep - 24 * H && t < dep - 4 * H) return 3 * H;
+  if (t >= dep - 5 * 24 * H && t < dep - 24 * H) return 12 * H;
+  return null;
+}
+
+// Legs due for a check now. A minute of slack so a 5-minute schedule lands on every 20 minutes.
+export function legsToCheck(trip, now, lastChecked = {}, notified = {}) {
   const t = now.getTime();
   const res = [];
   for (const f of trip.flights) {
     for (const leg of f.legs) {
-      const dep = new Date(leg.dep).getTime(), arr = new Date(leg.arr).getTime();
       const key = `${leg.flightNo}_${leg.dep.slice(0, 10)}`;
-      const since = t - (lastChecked[key] || 0);
-      const near = t >= dep - 6 * 3600e3 && t <= arr + 3600e3;
-      const dayOut = t >= dep - 24 * 3600e3 && t < dep - 6 * 3600e3;
-      if ((near && since >= 25 * 60e3) || (dayOut && since >= 6 * 3600e3)) res.push({ key, leg });
+      const every = pollEvery(leg, t, notified[key]);
+      if (every && t - (lastChecked[key] || 0) >= every - M) res.push({ key, leg });
     }
   }
   return res;
+}
+
+// Landed: a note for Jacob so he can check in with them.
+export function landedAlert(leg, prev, next) {
+  if (!next || next.status !== 'landed' || (prev && prev.status === 'landed')) return null;
+  const to = leg.to.city || leg.to.code;
+  return `🛬 <b>טיסה ${leg.flightNo} נחתה</b> ב${to}${next.arrLocal ? ` ב-${next.arrLocal}` : ''}. זה זמן טוב לשלוח להם הודעה.`;
 }
 
 // Compare a leg's new status with what we last told them; return a push or null.
