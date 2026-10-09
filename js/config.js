@@ -11,6 +11,8 @@ window.APP_CONFIG = {
     messagingSenderId: '1008578466900',
     appId: '1:1008578466900:web:a6c16ad23596738d8a49c1',
   },
+  // Firebase console → Project settings → Cloud Messaging → Web Push certificates (public key).
+  vapidKey: null,
   // Who may create the trip from the admin screen before it exists (must match the rules).
   adminEmails: ['kobi2132@gmail.com'],
 };

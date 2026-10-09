@@ -8,6 +8,10 @@
   App.role = null;
   App.user = null;
   App.canEdit = () => App.role === 'traveler' || App.role === 'admin';
+  // Push makes sense for people on the trip, on a real install with Firebase connected.
+  App.pushAvailable = () => App.canEdit() && !!cfg.vapidKey && App.dataSource !== 'embedded'
+    && 'Notification' in window && 'serviceWorker' in navigator;
+  App.pushOn = () => App.pushAvailable() && Notification.permission === 'granted' && App.store.get('push_on', false);
 
   const cacheKey = () => 'trip_cache_' + cfg.tripId;
 
@@ -98,6 +102,24 @@
     async save(data, members) {
       const { fsMod, db } = fb;
       await fsMod.setDoc(fsMod.doc(db, 'trips', cfg.tripId), { data, members, updatedAt: fsMod.serverTimestamp() });
+    },
+
+    // Ask permission, get this phone's push token, and register it for the trip.
+    async enablePush() {
+      if (!cfg.vapidKey) throw new Error('vapid key missing');
+      const perm = await Notification.requestPermission();
+      if (perm !== 'granted') return false;
+      const { fsMod, db, auth } = fb;
+      const msgMod = await import(SDK + 'firebase-messaging.js');
+      const messaging = msgMod.getMessaging();
+      const token = await msgMod.getToken(messaging, {
+        vapidKey: cfg.vapidKey, serviceWorkerRegistration: await navigator.serviceWorker.ready,
+      });
+      await fsMod.setDoc(fsMod.doc(db, 'trips', cfg.tripId, 'devices', auth.currentUser.uid), {
+        token, email: App.user.email, userAgent: navigator.userAgent.slice(0, 200), updatedAt: fsMod.serverTimestamp(),
+      });
+      App.store.set('push_on', true);
+      return true;
     },
 
     async loadForAdmin() {

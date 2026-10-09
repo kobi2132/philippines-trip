@@ -124,10 +124,19 @@
   // ---------- events ----------
 
   document.addEventListener('click', async (e) => {
-    const t = e.target.closest('[data-copy],[data-check],[data-done],[data-show-hotel],[data-close],[data-font],[data-signin],[data-signout],[data-admin-save],.arrow.off');
+    const t = e.target.closest('[data-push],[data-copy],[data-check],[data-done],[data-show-hotel],[data-close],[data-font],[data-signin],[data-signout],[data-admin-save],.arrow.off');
     if (!t) return;
     if (t.matches('.arrow.off')) { e.preventDefault(); return; }
-    if (t.dataset.copy) {
+    if (t.hasAttribute('data-push')) {
+      t.disabled = true;
+      try {
+        const ok = await App.backend.enablePush();
+        if (ok) App.render(); else document.getElementById('push-msg').textContent = 'לא אישרתם התראות. אפשר לנסות שוב.';
+      } catch (err) {
+        document.getElementById('push-msg').textContent = 'לא הצלחנו להפעיל התראות (' + (err.code || err.message) + ')';
+      }
+      t.disabled = false;
+    } else if (t.dataset.copy) {
       try { await navigator.clipboard.writeText(t.dataset.copy); t.textContent = '✅ הועתק'; } catch (err) { t.textContent = t.dataset.copy; }
       setTimeout(() => { t.textContent = '📋 העתק'; }, 2000);
     } else if (t.dataset.done) {
