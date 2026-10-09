@@ -68,6 +68,18 @@
     </div>`;
   };
 
+  // Online check-in is done with the airline of the first flight in the booking.
+  const CHECKIN = {
+    FZ: ['flydubai', 'https://www.flydubai.com/en/flying-with-us/check-in/online-check-in/'],
+    PR: ['Philippine Airlines', 'https://www.philippineairlines.com/ph/en/check-in-online.html'],
+    '5J': ['Cebu Pacific', 'https://book.cebupacificair.com/Checkin/Retrieve'],
+    DG: ['Cebu Pacific', 'https://book.cebupacificair.com/Checkin/Retrieve'],
+  };
+  const checkinBtn = (f) => {
+    const c = CHECKIN[f.legs[0].flightNo.slice(0, 2)];
+    return c ? `<a class="btn btn-checkin" href="${c[1]}" target="_blank" rel="noopener">✅ צ'ק אין באתר <bdi>${c[0]}</bdi></a>` : '';
+  };
+
   const flightCard = (f, opts = {}) => {
     const legs = f.legs.map(legBlock);
     const conn = f.connection ? `
@@ -81,11 +93,10 @@
     <section class="card card-flight">
       <div class="card-title"><span class="ico ico-blue">✈️</span><h3>${esc(f.title)}</h3></div>
       ${opts.showAirportBy ? `<div class="big-callout">🕐 להיות בשדה התעופה עד <b>${App.airportBy(f)}</b><small>${f.international ? '3 שעות לפני טיסה בינלאומית' : 'שעתיים לפני טיסת פנים'}</small></div>` : ''}
-      <div class="booking"><span>מספר הזמנה לצ'ק אין</span><b class="code">${esc(f.booking)}</b>${copyBtn(f.booking)}</div>
       ${body}
       ${f.arrivalTransfer ? `<p class="note">🔀 ${esc(f.arrivalTransfer)}</p>` : ''}
       <details class="more"><summary>🧳 כבודה</summary><p>${esc(f.baggage)}</p><p>${esc(f.carryOn)}</p></details>
-      ${App.navButtons(`${f.legs[0].from.name} airport ${f.legs[0].from.code}`)}
+      <div class="booking"><span>מספר הזמנה לצ'ק אין</span>${checkinBtn(f)}<b class="code">${esc(f.booking)}</b>${copyBtn(f.booking)}</div>
     </section>`;
   };
 
