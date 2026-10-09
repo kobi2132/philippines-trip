@@ -99,13 +99,14 @@
 
   // ---------- admin ----------
 
-  const ROLES = [['traveler', 'מטייל: צפייה, סימונים ועריכת רשימות'], ['viewer', 'צופה: צפייה בלבד'], ['admin', 'מנהל: הכל']];
+  const ROLES = [['traveler', 'מטייל'], ['viewer', 'צופה'], ['admin', 'מנהל']];
   const memberRow = (email = '', role = 'viewer') => `
     <div class="member-row">
       <input type="email" class="m-email" dir="ltr" placeholder="name@gmail.com" value="${esc(email)}">
       <select class="m-role">${ROLES.map(([k, l]) => `<option value="${k}" ${k === role ? 'selected' : ''}>${l}</option>`).join('')}</select>
-      <button class="li-del" data-member-del aria-label="מחיקה">🗑️</button>
+      <button class="li-del" data-member-del aria-label="הסרה">🗑️</button>
     </div>`;
+  let pendingRow = null; // the user row waiting for "are you sure?"
   const fillMembers = (members) => {
     document.getElementById('admin-members').innerHTML = Object.entries(members || {}).map(([e, r]) => memberRow(e, r)).join('');
   };
@@ -153,7 +154,8 @@
     return `<h1 class="page-h">⚙️ ניהול נתונים</h1>
       ${empty ? '<p>הטיול עוד לא קיים במסד הנתונים. טענו קובץ ושמרו.</p>' : ''}
       <section class="card"><div class="card-title"><span class="ico ico-blue">👥</span><h3>משתמשים</h3></div>
-        <p class="muted">המשתמשים נכנסים עם חשבון Google של המייל שכאן.</p>
+        <p class="muted">המשתמשים נכנסים עם חשבון Google של המייל שכאן. מטייל: צפייה, סימונים ועריכת רשימות. צופה: צפייה בלבד. מנהל: הכל.</p>
+        <div class="member-row member-head"><span>מייל משתמש</span><span>תפקיד</span><span>הסרה</span></div>
         <div id="admin-members"></div>
         <button class="btn" data-member-add>➕ הוספת משתמש</button>
       </section>
@@ -224,7 +226,7 @@
   };
 
   document.addEventListener('click', async (e) => {
-    const t = e.target.closest('[data-install],[data-install-help],[data-dismiss],[data-push],[data-copy],[data-check],[data-done],[data-show-hotel],[data-close],[data-font],[data-signin],[data-signout],[data-admin-save],[data-fx],[data-list-edit],[data-list-add],[data-list-del],[data-member-add],[data-member-del],.arrow.off');
+    const t = e.target.closest('[data-install],[data-install-help],[data-dismiss],[data-push],[data-copy],[data-check],[data-done],[data-show-hotel],[data-close],[data-font],[data-signin],[data-signout],[data-admin-save],[data-fx],[data-list-edit],[data-list-add],[data-list-del],[data-member-add],[data-member-del],[data-member-confirm],.arrow.off');
     if (!t) return;
     if (t.matches('.arrow.off')) { e.preventDefault(); return; }
     if (t.hasAttribute('data-fx')) {
@@ -279,7 +281,17 @@
       document.getElementById('admin-members').insertAdjacentHTML('beforeend', memberRow());
       document.querySelector('.member-row:last-child .m-email').focus();
     } else if (t.hasAttribute('data-member-del')) {
-      t.closest('.member-row').remove();
+      pendingRow = t.closest('.member-row');
+      const email = pendingRow.querySelector('.m-email').value.trim();
+      document.body.insertAdjacentHTML('beforeend', `
+        <div class="modal" data-close><div class="modal-box confirm-box" dir="rtl">
+          <h2>בטוח?</h2>
+          <p>להסיר את <bdi>${esc(email || 'המשתמש')}</bdi>${email ? '' : ' הריק'}? השינוי נשמר רק אחרי לחיצה על 💾 שמירה.</p>
+          <div class="btn-row"><button class="btn btn-danger" data-member-confirm>🗑️ מחיקה</button><button class="btn" data-close>ביטול</button></div>
+        </div></div>`);
+    } else if (t.hasAttribute('data-member-confirm')) {
+      pendingRow?.remove(); pendingRow = null;
+      document.querySelector('.modal')?.remove();
     } else if (t.hasAttribute('data-admin-save')) {
       adminSave();
     }

@@ -225,11 +225,14 @@ small { font-size: .78rem; }
 .text-size { flex-wrap: wrap; }
 .text-size button { font: inherit; font-weight: 700; min-width: 56px; padding: 0 12px; height: 48px; border-radius: 12px; border: 2px solid var(--line); background: var(--card); }
 .admin-label { display: block; font-weight: 600; margin-top: 12px; }
-.member-row { display: grid; grid-template-columns: 1fr 40px; gap: 6px; padding: 8px 0; border-bottom: 1px solid var(--line); }
-.member-row .m-email, .member-row .m-role { font: inherit; padding: 8px 10px; border-radius: 10px; border: 2px solid var(--line); background: #fff; min-width: 0; }
-.member-row .m-email { grid-column: 1; }
-.member-row .m-role { grid-column: 1; grid-row: 2; }
-.member-row .li-del { grid-column: 2; grid-row: 1 / span 2; height: auto; }
+.member-row { display: grid; grid-template-columns: 1fr 88px 40px; gap: 6px; align-items: center; padding: 6px 0; border-bottom: 1px solid var(--line); }
+.member-row .m-email, .member-row .m-role { font: inherit; font-size: .9rem; padding: 8px; border-radius: 10px; border: 2px solid var(--line); background: #fff; min-width: 0; width: 100%; }
+.member-row .li-del { height: 38px; }
+.member-head { font-size: .8rem; font-weight: 700; color: var(--muted); padding-bottom: 2px; }
+.member-head span:last-child { text-align: center; }
+.confirm-box { direction: rtl; text-align: center; }
+.confirm-box .btn-row { margin-top: 6px; }
+.btn-danger { background: #dc2626; color: #fff; }
 .admin-general p { margin: 2px 0; }
 .admin-sec { border-top: 1px solid var(--line); padding: 8px 0; }
 .admin-sec > summary { font-weight: 700; cursor: pointer; padding: 4px 0; }
