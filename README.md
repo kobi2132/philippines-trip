@@ -27,3 +27,22 @@
 ## עדכון הנתונים
 
 נכנסים כמנהל, מידע ← ניהול נתונים, עורכים את ה-JSON ושומרים. ההורים מקבלים את העדכון בפתיחה הבאה.
+
+## סטטוס טיסות והתראות
+
+`notifier/` רץ כל 15 דקות ב-GitHub Actions (`.github/workflows/notifier.yml`) באוקטובר ובנובמבר:
+
+- שולח תזכורות: eTravel יומיים לפני, אריזה יום לפני, בוקר טוב בכל יום בטיול, וביום טיסה מתי להיות בשדה.
+- בודק את מצב הטיסות ב-AeroDataBox ושולח התראה על ביטול, שינוי שעה או שער.
+- כותב את מצב הטיסות ל-Firestore, והאפליקציה מציגה אותו בכרטיס הטיסה.
+
+צריך שני secrets בריפו (Settings ← Secrets and variables ← Actions):
+
+| Secret | מה זה |
+| --- | --- |
+| `FIREBASE_SERVICE_ACCOUNT` | קובץ ה-JSON של service account מ-Firebase (Project settings ← Service accounts) |
+| `AERODATABOX_KEY` | מפתח RapidAPI לתוכנית החינמית של AeroDataBox. בלעדיו רק התזכורות נשלחות |
+
+ובנוסף `vapidKey` ב-`js/config.js` (Firebase ← Project settings ← Cloud Messaging ← Web Push certificates).
+
+בדיקה: Actions ← Flight status and reminders ← Run workflow, לסמן את התיבה, ולכל טלפון שהפעיל התראות תגיע הודעת בדיקה.

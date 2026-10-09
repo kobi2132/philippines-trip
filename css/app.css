@@ -208,3 +208,7 @@ small { font-size: .78rem; }
 .tabbar .tab-ico { font-size: 1.5rem; line-height: 1.1; }
 .tabbar a.on { color: var(--teal); background: #ecfeff; }
 .tabbar[hidden] { display: none; }
+
+.push-card { background: #fff7ed; border-radius: var(--radius); padding: 12px 16px; margin: 8px 0 12px; }
+.push-card p { margin: 0 0 4px; font-weight: 500; }
+.push-card .btn { margin-top: 6px; }

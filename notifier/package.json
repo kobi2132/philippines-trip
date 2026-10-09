@@ -1,0 +1,8 @@
+{
+  "name": "trip-notifier",
+  "private": true,
+  "type": "module",
+  "description": "Scheduled job: live flight status and push notifications for the trip app",
+  "scripts": { "start": "node run.mjs" },
+  "dependencies": { "firebase-admin": "^12.7.0" }
+}
