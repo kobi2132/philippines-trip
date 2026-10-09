@@ -4,7 +4,7 @@
 import { initializeApp, cert } from 'firebase-admin/app';
 import { getFirestore, FieldValue } from 'firebase-admin/firestore';
 import { getMessaging } from 'firebase-admin/messaging';
-import { dueReminders, legsToCheck, flightChangeAlert, landedAlert, dueTelegram } from './schedule.mjs';
+import { dueReminders, legsToCheck, flightChangeAlert, landedAlert, dueTelegram, telegramReminders } from './schedule.mjs';
 import { telegram, telegramOn } from './telegram.mjs';
 import { fetchLegStatus } from './flights.mjs';
 
@@ -46,6 +46,22 @@ if (!trip) { console.log('trip not found'); process.exit(0); }
 if (process.env.TEST_PUSH === '1') {
   await push('🔔 בדיקת התראות', 'אם רואים את זה, ההתראות של אפליקציית הטיול עובדות!');
   await telegram('🔔 בדיקה: הבוט של אפליקציית הטיול מחובר ויעדכן אותך כאן.');
+  process.exit(0);
+}
+
+// One of each Telegram message, built from the real trip with made-up flight changes. Telegram only.
+if (process.env.TG_SAMPLES === '1') {
+  const f = trip.flights[0], leg = f.legs[0];
+  const sample = (text) => telegram(`🧪 <i>דוגמה</i>\n${text}`);
+  for (const r of telegramReminders(trip).filter((x) => x.key.endsWith(`${f.date}_${leg.flightNo}`) || x.key === `tg_day_${f.date}`)) await sample(r.text);
+  const alerts = [
+    flightChangeAlert(leg, null, { status: 'delayed', depLocal: '11:25' }),
+    flightChangeAlert(leg, null, { status: 'scheduled', depLocal: leg.dep.slice(11, 16), gate: 'B7' }),
+    flightChangeAlert(leg, null, { status: 'cancelled' }),
+  ];
+  for (const a of alerts) await sample(`<b>${a.title}</b>\n${a.body}`);
+  await sample(landedAlert(f.legs[f.legs.length - 1], { status: 'departed' }, { status: 'landed', arrLocal: '09:42' }));
+  await sample('⚠️ בדיקת הטיסות נכשלה: AeroDataBox 429 for FZ1550');
   process.exit(0);
 }
 
