@@ -172,7 +172,9 @@ small { font-size: .78rem; }
 .tip { background: #fefce8; border-radius: 14px; padding: 12px 14px; margin: 12px 0; }
 .tag { display: inline-block; background: #ecfeff; color: var(--teal); font-weight: 700; font-size: .82rem; border-radius: 999px; padding: 3px 10px; margin-bottom: 6px; }
 .list-date-h { font-weight: 700; color: var(--muted); margin: 18px 4px -6px; }
-.list-date.is-next .card { border: 2px solid var(--teal); }
+.list-date.is-next > .card { border: 2px solid var(--teal); border-inline-start-width: 6px; }
+.list-date { margin-top: 12px; }
+.list-date .tag { margin: 0 4px -4px; }
 .is-past { opacity: .55; }
 
 /* checklists */
@@ -245,3 +247,21 @@ small { font-size: .78rem; }
 .install-help li { margin-bottom: 10px; }
 .update-bar { position: fixed; left: 12px; right: 12px; bottom: calc(70px + env(safe-area-inset-bottom)); z-index: 40; display: flex; align-items: center; justify-content: space-between; gap: 10px; background: #0f172a; color: #fff; border-radius: 18px; padding: 12px 14px; box-shadow: 0 8px 24px rgba(15, 23, 42, .3); font-weight: 600; }
 .update-bar .btn { background: #fbbf24; color: #0f172a; white-space: nowrap; margin: 0; }
+
+/* collapsible cards (flights / hotels lists) */
+.fold { padding: 0; overflow: hidden; }
+.fold.card { border-inline-start: 6px solid var(--accent, var(--blue)); }
+.fold > summary { list-style: none; cursor: pointer; padding: 12px 14px; position: relative; }
+.fold > summary::-webkit-details-marker { display: none; }
+.fold > summary .card-title { margin-bottom: 4px; padding-left: 34px; }
+.fold-line { display: flex; flex-wrap: wrap; gap: 4px 14px; color: var(--muted); font-size: .92rem; }
+.fold-line b { color: var(--text); }
+.fold-line sup { color: var(--orange); font-size: .7rem; }
+.fold-alert { margin-top: 6px; color: #9a3412; background: var(--warn-bg); border-radius: 10px; padding: 4px 10px; font-weight: 600; font-size: .9rem; }
+.fold-btn { position: absolute; top: 14px; left: 12px; width: 32px; height: 32px; border-radius: 50%; background: #f1f5f9; display: grid; place-items: center; color: var(--teal); font-weight: 700; }
+.fold-btn::before { content: '⌄'; font-size: 1.2rem; line-height: 1; margin-top: -6px; }
+.fold[open] .fold-btn::before { content: '⌃'; margin-top: 6px; }
+.fold[open] > summary { border-bottom: 1px solid var(--line); }
+/* the full card inside: no second frame or title */
+.fold > .card { margin: 0; border: 0; box-shadow: none; border-radius: 0; }
+.fold > .card > .card-title { display: none; }

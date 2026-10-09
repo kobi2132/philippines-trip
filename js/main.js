@@ -35,6 +35,20 @@
   };
   window.addEventListener('scroll', onScroll, { passive: true });
 
+  // Flights / hotels lists: opening one card closes the others in the same list.
+  document.addEventListener('toggle', (e) => {
+    const d = e.target;
+    if (!d.matches || !d.matches('details[data-fold]')) return;
+    const group = d.dataset.fold;
+    if (d.open) {
+      App.openFold[group] = d.dataset.id;
+      document.querySelectorAll(`details[data-fold="${group}"][open]`).forEach((o) => { if (o !== d) o.open = false; });
+      setTimeout(() => d.scrollIntoView({ behavior: 'smooth', block: 'nearest' }), 50);
+    } else if (App.openFold[group] === d.dataset.id) {
+      App.openFold[group] = null;
+    }
+  }, true);
+
   // ---------- full-screen states (before the trip data is available) ----------
 
   const SCREENS = {
