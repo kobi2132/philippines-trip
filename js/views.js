@@ -171,7 +171,8 @@
     if (!App.pushAvailable()) return '';
     if (App.pushOn()) return compact ? '' : '<p>✅ ההתראות פעילות בטלפון הזה.</p>';
     if (Notification.permission === 'denied') return compact ? '' : '<p class="muted">ההתראות חסומות. אפשר להפעיל אותן בהגדרות של Chrome לאתר הזה.</p>';
-    return `<div class="push-card"><p>🔔 ${compact ? 'רוצים תזכורת כל בוקר ועדכונים על הטיסות?' : 'תזכורת כל בוקר, ערב לפני טיסה, והודעה מיד כשטיסה משתנה.'}</p>
+    if (compact && App.store.get('push_dismissed', false)) return '';
+    return `<div class="push-card">${compact ? '<button class="card-x" data-dismiss="push_dismissed" aria-label="סגירה">✕</button>' : ''}<p>🔔 ${compact ? 'רוצים תזכורת כל בוקר ועדכונים על הטיסות?' : 'תזכורת כל בוקר, ערב לפני טיסה, והודעה מיד כשטיסה משתנה.'}</p>
       <button class="btn btn-wide" data-push>🔔 הפעלת התראות</button><p class="muted" id="push-msg"></p></div>`;
   };
 
@@ -269,9 +270,9 @@
   const todayView = () => {
     const ph = App.phase();
     const T = App.trip;
-    if (ph === 'before') return pushCard(true) + beforeView();
+    if (ph === 'before') return App.installCard(true) + pushCard(true) + beforeView();
     if (ph === 'after') return `${afterContent()}<a class="btn btn-wide" href="#/day/${T.end}">לדפדף בימי הטיול</a>`;
-    return pushCard(true) + dayView(App.today());
+    return App.installCard(true) + pushCard(true) + dayView(App.today());
   };
 
   const flightsView = () => {
@@ -331,6 +332,7 @@
     const wa = T.contact.whatsapp ? `https://wa.me/${T.contact.whatsapp.replace(/\D/g, '')}` : null;
     return `<h1 class="page-h">ℹ️ מידע חשוב</h1>
       ${wa ? `<a class="btn btn-wide btn-wa" href="${wa}" target="_blank" rel="noopener">💬 וואטסאפ ל${esc(T.contact.name)}</a>` : ''}
+      ${App.canInstall() ? `<section class="card"><div class="card-title"><span class="ico ico-teal">📲</span><h3>התקנה במסך הבית</h3></div>${App.installCard(false)}</section>` : ''}
       ${App.pushAvailable() ? `<section class="card"><div class="card-title"><span class="ico ico-orange">🔔</span><h3>התראות</h3></div>${pushCard(false)}</section>` : ''}
       <section class="card"><div class="card-title"><span class="ico ico-red">🆘</span><h3>חירום</h3></div>
         <a class="btn" href="tel:${esc(I.emergencyPhone)}">📞 חירום בפיליפינים: ${esc(I.emergencyPhone)}</a>

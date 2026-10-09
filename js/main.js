@@ -139,10 +139,16 @@
   };
 
   document.addEventListener('click', async (e) => {
-    const t = e.target.closest('[data-push],[data-copy],[data-check],[data-done],[data-show-hotel],[data-close],[data-font],[data-signin],[data-signout],[data-admin-save],.arrow.off');
+    const t = e.target.closest('[data-install],[data-install-help],[data-dismiss],[data-push],[data-copy],[data-check],[data-done],[data-show-hotel],[data-close],[data-font],[data-signin],[data-signout],[data-admin-save],.arrow.off');
     if (!t) return;
     if (t.matches('.arrow.off')) { e.preventDefault(); return; }
-    if (t.hasAttribute('data-push')) {
+    if (t.hasAttribute('data-install')) {
+      App.promptInstall();
+    } else if (t.hasAttribute('data-install-help')) {
+      document.body.insertAdjacentHTML('beforeend', App.installHelpModal());
+    } else if (t.dataset.dismiss) {
+      App.store.set(t.dataset.dismiss, true); App.render();
+    } else if (t.hasAttribute('data-push')) {
       t.disabled = true;
       try {
         const res = await App.backend.enablePush();
