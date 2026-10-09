@@ -267,9 +267,8 @@
         <div class="countdown"><b>${days}</b><span>${days === 1 ? 'יום' : 'ימים'}</span></div>
         <p class="muted">המראה ב${App.longDate(T.start)}, ${App.localTime(T.flights[0].legs[0].dep)}</p>
       </header>
-      <section class="card"><div class="card-title"><span class="ico ico-blue">📝</span><h3>מה עוד צריך לעשות לפני הטיול</h3></div>${checklist('before', T.checklists.before)}</section>
-      <a class="btn btn-wide" href="#/route">🗺️ לראות את המסלול</a>
-      <a class="btn btn-wide" href="#/day/${T.start}">👀 להציץ ביום הראשון</a>`;
+      <a class="btn btn-wide" href="#/day/${T.start}">👀 להציץ ביום הראשון</a>
+      <section class="card"><div class="card-title"><span class="ico ico-blue">📝</span><h3>מה עוד צריך לעשות לפני הטיול</h3></div>${checklist('before', T.checklists.before)}</section>`;
   };
 
   const todayView = () => {
@@ -387,7 +386,7 @@
         <p>${esc(I.timeDiff)}</p><p>🔌 ${esc(I.plug)}</p></section>
       <section class="card"><div class="card-title"><span class="ico ico-blue">📝</span><h3>לפני הטיול</h3></div>${checklist('before', T.checklists.before)}</section>
       <section class="card"><div class="card-title"><span class="ico ico-orange">🧳</span><h3>רשימת אריזה</h3></div>${checklist('packing', T.checklists.packing)}</section>
-      <div class="text-size"><span>גודל טקסט</span><button data-font="-1">א-</button><button data-font="1">א+</button></div>
+      <div class="text-size"><span>גודל טקסט</span><button data-font="-1">א-</button><button data-font="1">א+</button><button class="font-reset" data-font="0">ברירת מחדל</button></div>
       ${App.user ? `<p class="muted center">מחוברים בתור ${esc(App.user.email)} · <a href="#" data-signout>התנתקות</a></p>` : ''}
       ${App.role === 'admin' ? '<a class="btn btn-wide" href="#/admin">⚙️ ניהול נתונים</a>' : ''}`;
   };
