@@ -146,6 +146,10 @@
       ${mode === 'tonight' && !opts.noBanner ? '<div class="tag">🌙 כאן ישנים הלילה</div>' : ''}
       ${banner}
       <p class="muted">📍 ${esc(h.city)} · ${esc(h.address)}</p>
+      ${h.whatsapp || h.phone ? `<div class="btn-row">
+        ${h.whatsapp ? `<a class="btn btn-wa" href="https://wa.me/${esc(h.whatsapp.replace(/\D/g, ''))}" target="_blank" rel="noopener">💬 וואטסאפ למלון</a>` : ''}
+        ${h.phone ? `<a class="btn" href="tel:${esc(h.phone.replace(/[^\d+]/g, ''))}">📞 התקשרות</a>` : ''}
+      </div>` : ''}
       <div class="facts">
         <div class="fact"><span>📅 תאריכים</span><b>${App.range(h.checkIn, h.checkOut)}</b><small>${nights} ${nights === 1 ? 'לילה' : 'לילות'}</small></div>
         <div class="fact"><span>🛎️ צ'ק אין</span><b>${tm.checkInTime}</b></div>
@@ -153,7 +157,6 @@
       </div>
       <div class="booking"><span>מספר הזמנה</span>${/\d/.test(h.booking) ? `<b class="code">${esc(h.booking)}</b>${copyBtn(h.booking)}` : `<b>${esc(h.booking)}</b>`}</div>
       <p>🛏️ ${esc(h.room)}</p>
-      ${h.phone ? `<a class="btn" href="tel:${esc(h.phone)}">📞 התקשר למלון</a>` : ''}
       <button class="btn btn-show" data-show-hotel="${h.id}">🪧 הראה לנהג</button>
       ${App.navButtons(`${h.name}, ${h.address}`)}
     </section>`;
@@ -178,6 +181,27 @@
         ${App.navButtons(a.mapQuery)}
         ${App.canEdit() ? `<button class="btn btn-done" data-done="${a.id}">${done ? '✅ עשינו!' : '☐ סמנו שעשינו'}</button>` : ''}`}
     </section>`;
+  };
+
+  // Attractions list: name, tags and a "done" tick; tap to open the description, address and navigation.
+  const attractionFold = (a) => {
+    const t = a.tags || {};
+    const done = App.isDone(a.id);
+    const tick = App.canEdit() ? `<button class="attr-tick${done ? ' on' : ''}" data-done="${a.id}" aria-pressed="${done}">${done ? '✅ עשינו' : '☐ עשינו?'}</button>` : '';
+    const summary = `<div class="card-title"><span class="ico ico-green">${t.water ? '🏝️' : '🧭'}</span><h3>${esc(a.name)}</h3>${a.mustSee ? '<span class="must">⭐ חובה</span>' : ''}</div>
+      <div class="chips">
+        ${t.duration ? `<span class="chip">⏱️ ${esc(t.duration)}</span>` : ''}
+        ${t.difficulty ? `<span class="chip">💪 ${esc(t.difficulty)}</span>` : ''}
+        ${t.water ? '<span class="chip">🏊 מים</span>' : ''}
+      </div>${tick}`;
+    const full = `<section class="card">
+      <div class="en">${esc(a.en)}</div>
+      <p>${esc(a.desc)}</p>
+      ${a.agentNote ? `<p class="agent">💬 עדי: "${esc(a.agentNote)}"</p>` : ''}
+      ${a.address || a.mapQuery ? `<p class="muted">📍 <bdi>${esc(a.address || a.mapQuery)}</bdi></p>` : ''}
+      ${App.navButtons(a.mapQuery)}
+    </section>`;
+    return fold('attr', a.id, false, summary, full, `style="--accent:${App.place(a.place).color}" ${done ? 'data-done-card' : ''}`);
   };
 
   // A checklist card. Travelers tick items; "עריכה" lets them add and delete items too.
@@ -422,7 +446,7 @@
     const sel = placeKey || (order.includes(current) ? current : order[0]);
     return `<h1 class="page-h">🌴 אטרקציות</h1>
       <div class="tabs">${order.map((k) => `<a class="tab ${k === sel ? 'on' : ''}" href="#/attractions/${k}" style="--accent:${App.place(k).color}">${esc(App.place(k).name)}</a>`).join('')}</div>
-      ${T.attractions.filter((a) => a.place === sel).sort((a, b) => App.isDone(a.id) - App.isDone(b.id)).map((a) => attractionCard(a)).join('')}`;
+      ${T.attractions.filter((a) => a.place === sel).sort((a, b) => App.isDone(a.id) - App.isDone(b.id)).map(attractionFold).join('')}`;
   };
 
   const routeView = () => {
