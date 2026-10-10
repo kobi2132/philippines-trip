@@ -1,8 +1,8 @@
 // Offline support: app files are cached; bump VERSION to ship an update.
-const VERSION = 'v34';
+const VERSION = 'v35';
 const FILES = [
   './', 'index.html', 'manifest.webmanifest', 'css/app.css',
-  'js/config.js', 'js/util.js', 'js/shared.js', 'js/install.js', 'js/fx.js', 'js/trip.js', 'js/map.js', 'js/views.js', 'js/backend.js', 'js/main.js',
+  'js/config.js', 'js/util.js', 'js/shared.js', 'js/install.js', 'js/fx.js', 'js/trip.js', 'js/map.js', 'js/views.js', 'js/print.js', 'js/backend.js', 'js/main.js',
   'icons/icon-192.png', 'icons/icon-512.png',
 ];
 
