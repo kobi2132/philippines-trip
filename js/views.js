@@ -303,7 +303,7 @@
         <h2>מתרגשים? 🎒 הגיע הזמן לארוז!</h2>
         <div class="big-callout">🕐 מחר צריך להיות בנתב"ג עד <b>${App.airportBy(f)}</b></div>
       </section>
-      ${flightCard(f)}
+      ${fold('day', f.id, false, flightSummary(f), flightCard(f))}
       ${checklistCard('packing', '🧳', 'ico-orange', 'רשימת אריזה')}`;
   };
 
@@ -487,7 +487,7 @@
         <p>🕐 ${esc(I.timeDiff)}</p><p class="clocks" data-clocks>${App.clocks()}</p>
         <p>🔌 ${esc(I.plug)}</p>
         <p>💵 המטבע: ${esc(I.currency.name)} (להמרה: כפתור 💱)</p></section>
-      ${App.phase() !== 'before' ? '' : checklistCard('before', '📝', 'ico-blue', 'לפני הטיול')}
+      ${checklistCard('before', '📝', 'ico-blue', 'לפני הטיול')}
       ${checklistCard('packing', '🧳', 'ico-orange', 'רשימת אריזה')}
       ${pushLine()}
       <div class="text-size"><span>גודל טקסט</span><button data-font="-1">א-</button><button data-font="1">א+</button><button class="font-reset" data-font="0">רגיל</button></div>
