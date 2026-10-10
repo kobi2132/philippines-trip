@@ -183,11 +183,17 @@
   // A checklist card. Travelers tick items; "עריכה" lets them add and delete items too.
   const checklistCard = (key, ico, icoClass, title) => {
     const can = App.canEdit(), editing = can && App.editList === key;
-    const rows = App.getList(key).map((it) => `
+    const list = App.getList(key);
+    const done = list.filter((it) => it.done).length;
+    // Open items first, ticked ones sink to the bottom (unless editing, where the order stays put).
+    const items = editing ? list : [...list.filter((it) => !it.done), ...list.filter((it) => it.done)];
+    const rows = items.map((it) => `
       <li><label><input type="checkbox" data-check="${key}" data-id="${esc(it.id)}" ${it.done ? 'checked' : ''} ${can ? '' : 'disabled'}><span>${esc(it.text)}</span></label>
         ${editing ? `<button class="li-del" data-list-del="${key}" data-id="${esc(it.id)}" aria-label="מחיקה">🗑️</button>` : ''}</li>`).join('');
     return `<section class="card"><div class="card-title"><span class="ico ${icoClass}">${ico}</span><h3>${title}</h3>
+        ${list.length ? `<span class="list-progress${done === list.length ? ' all' : ''}"><bdi>${done}/${list.length}</bdi></span>` : ''}
         ${can ? `<button class="list-edit${editing ? ' on' : ''}" data-list-edit="${key}">${editing ? '✔️ סיום' : '✏️ עריכה'}</button>` : ''}</div>
+      ${list.length ? `<div class="list-bar"><i style="width:${Math.round(100 * done / list.length)}%"></i></div>` : ''}
       <ul class="checklist">${rows}</ul>
       ${editing ? `<div class="list-add"><input type="text" id="add-${key}" placeholder="להוסיף פריט..." enterkeyhint="done"><button class="btn" data-list-add="${key}">➕</button></div>` : ''}
     </section>`;
@@ -360,13 +366,17 @@
     hotelSummary(h) + (mode === 'tonight' ? '<div class="tag fold-tag">🌙 כאן ישנים הלילה</div>' : ''),
     hotelCard(h, mode, { noBanner: true }), `style="--accent:${App.place(h.place).color}"`);
 
+  // "יוצאים לדרך! תל אביב ← דובאי" → a small tag "יוצאים לדרך!" over the route.
+  const splitTitle = (t) => { const m = String(t).match(/^(.*?!)\s*(.*)$/); return m ? [m[1], m[2]] : ['', t]; };
   const flightSummary = (f) => {
     const first = f.legs[0], last = f.legs[f.legs.length - 1];
     const nextDay = App.localDate(last.arr) !== App.localDate(first.dep);
-    return `<div class="card-title"><span class="ico ico-blue">✈️</span><h3>${esc(f.title)}</h3></div>
+    const [tag, route] = splitTitle(f.title);
+    return `<div class="card-title"><span class="ico ico-blue">✈️</span><h3>${tag ? `<span class="title-tag">${esc(tag)}</span>` : ''}${esc(route)}</h3></div>
       <div class="fold-line"><span>📅 ${App.weekday(f.date)} <bdi>${App.shortDate(f.date)}</bdi></span>
-        <span>🛫 <b>${App.localTime(first.dep)}</b></span>
-        <span>🛬 <b>${App.localTime(last.arr)}</b>${nextDay ? '<sup>+1</sup>' : ''}</span></div>
+        <span>המראה <b>${App.localTime(first.dep)}</b></span>
+        <span>נחיתה <b>${App.localTime(last.arr)}</b>${nextDay ? '<sup>+1</sup>' : ''}</span></div>
+      <div class="fold-sub"><bdi>${f.legs.map((l) => esc(l.flightNo)).join(' · ')}</bdi></div>
 `;
   };
 
@@ -412,7 +422,7 @@
     const sel = placeKey || (order.includes(current) ? current : order[0]);
     return `<h1 class="page-h">🌴 אטרקציות</h1>
       <div class="tabs">${order.map((k) => `<a class="tab ${k === sel ? 'on' : ''}" href="#/attractions/${k}" style="--accent:${App.place(k).color}">${esc(App.place(k).name)}</a>`).join('')}</div>
-      ${T.attractions.filter((a) => a.place === sel).map((a) => attractionCard(a)).join('')}`;
+      ${T.attractions.filter((a) => a.place === sel).sort((a, b) => App.isDone(a.id) - App.isDone(b.id)).map((a) => attractionCard(a)).join('')}`;
   };
 
   const routeView = () => {
@@ -460,7 +470,7 @@
         <p>💵 המטבע: ${esc(I.currency.name)} (להמרה: כפתור 💱)</p></section>
       ${checklistCard('before', '📝', 'ico-blue', 'לפני הטיול')}
       ${checklistCard('packing', '🧳', 'ico-orange', 'רשימת אריזה')}
-      <div class="text-size"><span>גודל טקסט</span><button data-font="-1">א-</button><button data-font="1">א+</button><button class="font-reset" data-font="0">ברירת מחדל</button></div>
+      <div class="text-size"><span>גודל טקסט</span><button data-font="-1">א-</button><button data-font="1">א+</button><button class="font-reset" data-font="0">רגיל</button></div>
       ${App.user ? `<p class="muted center">מחוברים בתור ${esc(App.user.email)} · <a href="#" data-signout>התנתקות</a></p>` : ''}
       ${App.role === 'admin' ? '<a class="btn btn-wide" href="#/admin">⚙️ ניהול נתונים</a>' : ''}`;
   };
