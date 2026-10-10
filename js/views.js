@@ -164,29 +164,8 @@
     </section>`;
   };
 
-  const attractionCard = (a, compact) => {
-    const t = a.tags || {};
-    const done = App.isDone(a.id);
-    return `
-    <section class="card card-attr ${done ? 'is-done' : ''}">
-      <div class="card-title"><span class="ico ico-green">${t.water ? '🏝️' : '🧭'}</span><h3>${esc(a.name)}</h3>${a.mustSee ? '<span class="must">⭐ חובה</span>' : ''}</div>
-      <div class="en">${esc(a.en)}</div>
-      ${compact ? '' : `<p>${esc(a.desc)}</p>`}
-      <div class="chips">
-        ${t.duration ? `<span class="chip">⏱️ ${esc(t.duration)}</span>` : ''}
-        ${t.difficulty ? `<span class="chip">💪 ${esc(t.difficulty)}</span>` : ''}
-        ${t.water ? '<span class="chip">🏊 מים</span>' : ''}
-      </div>
-      ${a.agentNote ? `<p class="agent">💬 עדי: "${esc(a.agentNote)}"</p>` : ''}
-      ${compact ? `<a class="link-small" href="#/attractions/${a.place}">לפרטים ←</a>` : `
-        ${a.address || a.mapQuery ? `<p class="muted">📍 <bdi>${esc(a.address || a.mapQuery)}</bdi></p>` : ''}
-        ${App.navButtons(a.mapQuery)}
-        ${App.canEdit() ? `<button class="btn btn-done" data-done="${a.id}">${done ? '✅ עשינו!' : '☐ סמנו שעשינו'}</button>` : ''}`}
-    </section>`;
-  };
-
   // Attractions list: name, tags and a "done" tick; tap to open the description, address and navigation.
-  const attractionFold = (a) => {
+  const attractionFold = (a, group = 'attr') => {
     const t = a.tags || {};
     const done = App.isDone(a.id);
     const tick = App.canEdit() ? `<button class="attr-tick${done ? ' on' : ''}" data-done="${a.id}" aria-pressed="${done}">${done ? '✅ עשינו' : '☐ עשינו?'}</button>` : '';
@@ -203,7 +182,7 @@
       ${a.address || a.mapQuery ? `<p class="muted">📍 <bdi>${esc(a.address || a.mapQuery)}</bdi></p>` : ''}
       ${App.navButtons(a.mapQuery)}
     </section>`;
-    return fold('attr', a.id, false, summary, full, `style="--accent:${App.place(a.place).color}" ${done ? 'data-done-card' : ''}`);
+    return fold(group, a.id, false, summary, full, `style="--accent:${App.place(a.place).color}" ${done ? 'data-done-card' : ''}`);
   };
 
   // A checklist card. Travelers tick items; "עריכה" lets them add and delete items too.
@@ -284,7 +263,7 @@
     html += `
       <header class="day-head" style="--accent:${p ? p.color : '#2563eb'}">
         <div class="day-count">${n >= 1 && n <= App.totalDays() ? `יום ${n} מתוך ${App.totalDays()}` : ''}</div>
-        <h1>${p ? esc(p.name) : ''}${info.title ? ` <span>· ${esc(info.title)}</span>` : ''}</h1>
+        <h1>${p ? esc(p.name) : ''}${info.title && (!p || info.title !== p.name) ? ` <span>· ${esc(info.title)}</span>` : ''}</h1>
         <div class="day-date">${App.longDate(date)}</div>
         ${weatherSlot(date, info.place)}
       </header>
@@ -310,7 +289,7 @@
     }
     if (attrs.length) {
       html += `<h2 class="section-h">🌴 מה אפשר לעשות היום</h2>`;
-      attrs.forEach((a) => { html += attractionCard(a, true); });
+      [...attrs].sort((a, b) => App.isDone(a.id) - App.isDone(b.id)).forEach((a) => { html += attractionFold(a, 'dayattr'); });
     }
     (info.tips || []).forEach((tip) => { html += `<div class="tip">💡 ${esc(tip)}</div>`; });
     if (date === T.end) html += afterContent();
@@ -324,15 +303,22 @@
         <h2>מתרגשים? 🎒 הגיע הזמן לארוז!</h2>
         <div class="big-callout">🕐 מחר צריך להיות בנתב"ג עד <b>${App.airportBy(f)}</b></div>
       </section>
-      ${checklistCard('packing', '🧳', 'ico-orange', 'רשימת אריזה')}
-      ${flightCard(f)}`;
+      ${fold('day', f.id, false, flightSummary(f), flightCard(f))}
+      ${checklistCard('packing', '🧳', 'ico-orange', 'רשימת אריזה')}`;
   };
 
-  const afterContent = () => `
+  const afterContent = () => {
+    const T = App.trip;
+    const done = T.attractions.filter((a) => App.isDone(a.id)).length;
+    const places = [...new Set(T.days.filter((d) => !d.prep && d.place !== 'israel').map((d) => d.place))];
+    return `
     <section class="card hero-card">
       <h2>ברוכים השבים! 🏡</h2>
-      <p>${App.totalDays()} ימים, ${App.trip.flights.reduce((s, f) => s + f.legs.length, 0)} טיסות, ${App.trip.hotels.length} מלונות. איזה טיול!</p>
+      <p>${App.totalDays()} ימים, ${T.flights.reduce((s, f) => s + f.legs.length, 0)} טיסות, ${T.hotels.length} מלונות. איזה טיול!</p>
+      ${done ? `<div class="big-callout">✅ עשיתם <b>${done}</b> מתוך ${T.attractions.length} אטרקציות</div>` : ''}
+      <div class="tabs tabs-wrap">${places.map((k) => `<a class="tab" href="#/day/${T.days.find((d) => d.place === k).date}" style="--accent:${App.place(k).color}">${esc(App.place(k).name)}</a>`).join('')}</div>
     </section>`;
+  };
 
   const beforeView = () => {
     const T = App.trip;

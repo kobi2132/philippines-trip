@@ -41,7 +41,10 @@
     if (!headGone && bottom < -30) headGone = true;
     else if (headGone && bottom > 30) headGone = false;
     document.body.classList.toggle('head-gone', headGone);
+    const y = window.scrollY;
+    if (Math.abs(y - lastY) > 8) { document.body.classList.toggle('scroll-down', y > lastY && y > 80); lastY = y; }
   };
+  let lastY = 0;
   window.addEventListener('scroll', onScroll, { passive: true });
 
   // Flights / hotels lists: opening one card closes the others in the same list.
@@ -94,6 +97,7 @@
 
   App.showScreen = (name) => {
     tabbar().hidden = true;
+    document.querySelectorAll('.fx-fab').forEach((b) => b.remove());
     main().innerHTML = SCREENS[name]();
   };
 
