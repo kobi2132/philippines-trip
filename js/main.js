@@ -112,7 +112,7 @@
   };
   const readMembers = () => {
     const out = {};
-    for (const row of document.querySelectorAll('.member-row')) {
+    for (const row of document.querySelectorAll('#admin-members .member-row')) { // not the header row
       const email = row.querySelector('.m-email').value.trim().toLowerCase();
       if (!email) continue;
       if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) throw new Error('כתובת מייל לא תקינה: ' + email);
