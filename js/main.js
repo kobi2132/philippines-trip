@@ -210,7 +210,7 @@
 
   // ---------- events ----------
 
-  // What the browser reports about notifications, so a screenshot tells us why they fail.
+  // What the browser reports about notifications. Logged to the console only (not shown to users).
   const pushDiagnostics = async (result) => {
     let query = '?';
     try { query = (await navigator.permissions.query({ name: 'notifications' })).state; } catch (e) { query = 'err'; }
@@ -222,7 +222,7 @@
       'sw=' + !!(navigator.serviceWorker && navigator.serviceWorker.controller), 'push=' + ('PushManager' in window),
       'top=' + (window.top === window), ua.join(' '),
     ];
-    return `<span class="diag" dir="ltr">${App.esc(info.join(' · '))}</span>`;
+    return info.join(' · ');
   };
 
   document.addEventListener('click', async (e) => {
@@ -248,10 +248,10 @@
           // Chrome answers "denied" without asking when the site or Chrome itself is blocked.
           ? 'הטלפון חוסם התראות מהאתר הזה. כדי לפתוח: לוחצים על הסמל שמשמאל לכתובת האתר ← הרשאות ← התראות ← לאפשר. אם זה לא עוזר: הגדרות הטלפון ← אפליקציות ← Chrome ← התראות ← לאפשר.'
           : 'חלון האישור נסגר בלי תשובה. לוחצים שוב ובוחרים "אישור".';
-        if (res !== 'granted') document.getElementById('push-msg').insertAdjacentHTML('beforeend', await pushDiagnostics(res));
+        if (res !== 'granted') console.info('push', await pushDiagnostics(res));
       } catch (err) {
         document.getElementById('push-msg').textContent = 'לא הצלחנו להפעיל התראות (' + (err.code || err.message) + ')';
-        document.getElementById('push-msg').insertAdjacentHTML('beforeend', await pushDiagnostics('error'));
+        console.info('push', await pushDiagnostics('error'));
       }
       t.disabled = false;
     } else if (t.dataset.copy) {
