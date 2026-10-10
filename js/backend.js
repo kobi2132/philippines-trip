@@ -144,7 +144,10 @@
       return 'granted';
     },
 
+    // Waits for Firebase: the admin page can open from the cached copy before it has loaded.
     async loadForAdmin() {
+      for (let i = 0; !fb && i < 100; i++) await new Promise((r) => setTimeout(r, 200));
+      if (!fb) throw new Error('no connection');
       const { fsMod, db } = fb;
       const snap = await fsMod.getDoc(fsMod.doc(db, 'trips', cfg.tripId));
       return snap.exists() ? snap.data() : null;
