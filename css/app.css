@@ -357,3 +357,31 @@ p.push-line { justify-content: flex-start; }
 .fx-fab { transition: transform .25s, opacity .25s; }
 body.scroll-down .fx-fab { transform: translateY(90px); opacity: 0; pointer-events: none; }
 .tabs-wrap { flex-wrap: wrap; overflow: visible; mask-image: none; -webkit-mask-image: none; margin-top: 12px; justify-content: center; }
+
+/* Printable trip summary (admin → ייצוא ל-PDF) */
+#print-root { display: none; }
+@media print {
+  @page { size: A4; margin: 12mm 11mm; }
+  body.printing > *:not(#print-root) { display: none !important; }
+  body.printing { background: #fff; padding: 0; }
+  body.printing #print-root { display: block; }
+}
+.p-doc { color: #111827; font-size: 10.5pt; line-height: 1.4; direction: rtl; }
+.p-head { border-bottom: 3px solid #0e7490; padding-bottom: 6px; margin-bottom: 10px; }
+.p-head h1 { font-size: 20pt; margin: 0; color: #0e7490; }
+.p-head p { margin: 2px 0; }
+.p-route { font-size: 9.5pt; color: #374151; }
+.p-sec { margin-top: 12px; }
+.p-sec h2 { font-size: 13pt; margin: 0 0 4px; padding: 3px 8px; background: #e0f2f1; border-radius: 6px; break-after: avoid; }
+.p-sec h3 { font-size: 11pt; margin: 8px 0 2px; }
+.p-sec ul { margin: 0; padding-inline-start: 18px; }
+.p-sec li { margin: 2px 0; break-inside: avoid; }
+.p-doc table { width: 100%; border-collapse: collapse; font-size: 9.5pt; }
+.p-doc th, .p-doc td { border: 1px solid #d1d5db; padding: 3px 5px; text-align: start; vertical-align: top; }
+.p-doc thead th { background: #f3f4f6; font-weight: 700; }
+.p-doc tr { break-inside: avoid; }
+.p-kv th { width: 34%; background: #f9fafb; font-weight: 600; }
+.p-muted { color: #6b7280; font-size: 8.5pt; }
+.p-note { font-size: 9pt; margin: 4px 0 0; }
+.p-foot { margin-top: 14px; font-size: 8pt; color: #6b7280; text-align: center; }
+.p-nowrap { white-space: nowrap; }

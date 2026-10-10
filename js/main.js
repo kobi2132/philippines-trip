@@ -180,7 +180,11 @@
         </details>
       </section>
       <button class="btn btn-wide" data-admin-save>💾 שמירה</button>
-      <p id="admin-msg" class="muted"></p>`;
+      <p id="admin-msg" class="muted"></p>
+      <section class="card"><div class="card-title"><span class="ico ico-orange">🖨️</span><h3>הדפסה</h3></div>
+        <p class="muted">כל פרטי הטיול בכמה עמודים: טיסות, מלונות, הסעות, יום אחר יום ואטרקציות. בחלון ההדפסה בוחרים "שמירה כ-PDF".</p>
+        <button class="btn btn-wide" data-print>📄 ייצוא ל-PDF</button>
+      </section>`;
   }
 
   let membersLoaded = false;
@@ -240,7 +244,7 @@
   };
 
   document.addEventListener('click', async (e) => {
-    const t = e.target.closest('[data-install],[data-install-help],[data-dismiss],[data-push],[data-copy],[data-check],[data-done],[data-show-hotel],[data-close],[data-font],[data-signin],[data-signout],[data-admin-save],[data-fx],[data-list-edit],[data-list-add],[data-list-del],[data-member-add],[data-member-del],[data-member-confirm],.arrow.off');
+    const t = e.target.closest('[data-install],[data-install-help],[data-dismiss],[data-push],[data-copy],[data-check],[data-done],[data-show-hotel],[data-close],[data-font],[data-signin],[data-signout],[data-admin-save],[data-fx],[data-list-edit],[data-list-add],[data-list-del],[data-member-add],[data-member-del],[data-member-confirm],[data-print],.arrow.off');
     if (!t) return;
     if (t.matches('.arrow.off')) { e.preventDefault(); return; }
     if (t.hasAttribute('data-fx')) {
@@ -309,6 +313,8 @@
       document.querySelector('.modal')?.remove();
     } else if (t.hasAttribute('data-admin-save')) {
       adminSave();
+    } else if (t.hasAttribute('data-print')) {
+      App.printTrip();
     }
   });
 
