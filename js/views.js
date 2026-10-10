@@ -41,6 +41,8 @@
       if (!s) return '';
       const st = STATUS[s.status] || { label: s.status, cls: 'ok', icon: 'ℹ️' };
       const changed = s.depLocal && s.depLocal !== App.localTime(leg.dep);
+      // On time and nothing new: the status stays inside the flight card only.
+      if ((s.status === 'scheduled' || s.status === 'ontime') && !changed && !s.gate) return '';
       return `<div class="status status-${st.cls} status-live">
         <span>${st.icon} <bdi>${esc(leg.flightNo)}</bdi> ${esc(st.label)}${changed ? ` · המראה <b>${esc(s.depLocal)}</b> <s>${App.localTime(leg.dep)}</s>` : ''}${s.gate ? ` · שער <b>${esc(s.gate)}</b>` : ''}</span>
         ${s.updatedAt ? `<small>${minutesAgo(s.updatedAt)}</small>` : ''}
@@ -237,6 +239,14 @@
     if (compact && App.store.get('push_dismissed', false)) return '';
     return `<div class="push-card">${compact ? '<button class="card-x" data-dismiss="push_dismissed" aria-label="סגירה">✕</button>' : ''}<p>🔔 ${compact ? 'רוצים תזכורת כל בוקר ועדכונים על הטיסות?' : 'תזכורת כל בוקר, ערב לפני טיסה, והודעה מיד כשטיסה משתנה.'}</p>
       <button class="btn btn-wide" data-push>🔔 הפעלת התראות</button><p class="muted" id="push-msg"></p></div>`;
+  };
+
+  // Info page: notifications in one line, near the bottom.
+  const pushLine = () => {
+    if (!App.pushAvailable()) return '';
+    if (App.pushOn()) return '<p class="push-line">🔔 התראות: <b>פעילות ✅</b></p>';
+    if (Notification.permission === 'denied') return '<p class="push-line">🔔 התראות חסומות. אפשר להפעיל אותן בהגדרות של Chrome לאתר.</p>';
+    return '<div class="push-line"><span>🔔 התראות כבויות</span><button class="btn" data-push>הפעלה</button></div><p class="muted" id="push-msg"></p>';
   };
 
   const noteBanner = () => App.trip.updatedNote ? `<div class="msg-banner">💌 ${esc(App.trip.updatedNote)}</div>` : '';
@@ -479,7 +489,6 @@
     return `<h1 class="page-h">ℹ️ מידע חשוב</h1>
       ${wa ? `<a class="btn btn-wide btn-wa" href="${wa}" target="_blank" rel="noopener">💬 וואטסאפ ל${esc(T.contact.name)}</a>` : ''}
       ${App.canInstall() ? `<section class="card"><div class="card-title"><span class="ico ico-teal">📲</span><h3>התקנה במסך הבית</h3></div>${App.installCard(false)}</section>` : ''}
-      ${App.pushAvailable() ? `<section class="card"><div class="card-title"><span class="ico ico-orange">🔔</span><h3>התראות</h3></div>${pushCard(false)}</section>` : ''}
       <section class="card"><div class="card-title"><span class="ico ico-red">🆘</span><h3>חירום</h3></div>
         <a class="btn" href="tel:${esc(I.emergencyPhone)}">📞 חירום בפיליפינים: ${esc(I.emergencyPhone)}</a>
         <div class="btn-row btn-row-21">
@@ -494,6 +503,7 @@
         <p>💵 המטבע: ${esc(I.currency.name)} (להמרה: כפתור 💱)</p></section>
       ${checklistCard('before', '📝', 'ico-blue', 'לפני הטיול')}
       ${checklistCard('packing', '🧳', 'ico-orange', 'רשימת אריזה')}
+      ${pushLine()}
       <div class="text-size"><span>גודל טקסט</span><button data-font="-1">א-</button><button data-font="1">א+</button><button class="font-reset" data-font="0">רגיל</button></div>
       ${App.user ? `<p class="muted center">מחוברים בתור ${esc(App.user.email)} · <a href="#" data-signout>התנתקות</a></p>` : ''}
       ${App.role === 'admin' ? '<a class="btn btn-wide" href="#/admin">⚙️ ניהול נתונים</a>' : ''}`;
