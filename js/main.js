@@ -149,10 +149,18 @@
   };
 
   function adminView(empty) {
+    // Saving replaces the whole users list, so it stays locked until the real list has loaded.
+    membersLoaded = false;
     setTimeout(async () => {
-      const cur = await App.backend.loadForAdmin().catch(() => null);
+      let cur;
+      try { cur = await App.backend.loadForAdmin(); } catch (e) {
+        document.getElementById('admin-members').innerHTML = '<p class="muted">❌ לא הצלחתי לטעון את המשתמשים. סגרו ופתחו את המסך שוב.</p>';
+        document.getElementById('admin-msg').textContent = 'השמירה נעולה עד שהמשתמשים ייטענו.';
+        return;
+      }
       document.getElementById('admin-data').value = JSON.stringify(cur ? cur.data : App.trip || {}, null, 2);
       fillMembers(cur ? cur.members : { [App.user.email]: 'admin' });
+      membersLoaded = true;
       showSummary();
     });
     return `<h1 class="page-h">⚙️ ניהול נתונים</h1>
@@ -175,9 +183,11 @@
       <p id="admin-msg" class="muted"></p>`;
   }
 
+  let membersLoaded = false;
   async function adminSave() {
     const msg = document.getElementById('admin-msg');
     try {
+      if (!membersLoaded) throw new Error('המשתמשים עוד לא נטענו מהשרת, אי אפשר לשמור.');
       const data = JSON.parse(document.getElementById('admin-data').value);
       const members = readMembers();
       if (!Object.keys(members).length) throw new Error('צריך לפחות משתמש אחד');
