@@ -339,3 +339,18 @@ body:has(#update-bar) .fx-fab, body:has(.modal) .fx-fab { display: none; }
 .list-progress.all { background: #dcfce7; color: #166534; }
 .list-bar { height: 6px; background: #f1f5f9; border-radius: 999px; overflow: hidden; margin: -2px 0 6px; }
 .list-bar i { display: block; margin-left: auto; height: 100%; background: var(--green); border-radius: 999px; }
+/* attractions as folding cards with a done tick */
+.fold[data-fold="attr"] > summary .chips { margin: 2px 0 0; }
+.fold[data-done-card] > summary h3 { color: var(--muted); }
+.fold[data-fold="attr"] > summary .chips { padding-left: 96px; }
+.attr-tick { position: absolute; bottom: 12px; left: 12px; height: 34px; padding: 0 10px; border-radius: 999px; border: 2px solid #86efac; background: #fff; color: #166534; font: inherit; font-weight: 700; font-size: .9rem; cursor: pointer; }
+.attr-tick.on { background: #dcfce7; border-color: #dcfce7; }
+.chip-done { background: #dcfce7; color: #166534; }
+/* Day arrows: a slim row, the arrows right next to a fixed-width "today" button */
+.day-nav { justify-content: center; gap: 8px; padding: 4px 0; }
+.day-nav .arrow, .head-gone .day-nav .arrow { height: 38px; width: 46px; font-size: 1.25rem; border-radius: 12px; }
+.today-btn, .head-gone .today-btn { flex: none; width: 168px; height: 38px; font-size: .95rem; border-radius: 12px; white-space: nowrap; }
+/* notifications line on the info page */
+.push-line { display: flex; align-items: center; justify-content: space-between; gap: 10px; background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 8px 12px; margin: 16px 0 0; }
+.push-line .btn { margin: 0; width: auto; padding: 0 16px; min-height: 38px; height: 38px; background: #ffedd5; }
+p.push-line { justify-content: flex-start; }

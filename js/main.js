@@ -258,6 +258,7 @@
       try { await navigator.clipboard.writeText(t.dataset.copy); t.textContent = '✅ הועתק'; } catch (err) { t.textContent = t.dataset.copy; }
       setTimeout(() => { t.textContent = '📋 העתק'; }, 2000);
     } else if (t.dataset.done) {
+      e.preventDefault(); // the tick sits inside a card's fold header: don't open/close the card
       App.toggleDone(t.dataset.done); App.render();
     } else if (t.dataset.listEdit) {
       App.editList = App.editList === t.dataset.listEdit ? null : t.dataset.listEdit; App.render();

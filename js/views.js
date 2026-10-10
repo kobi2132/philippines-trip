@@ -41,6 +41,8 @@
       if (!s) return '';
       const st = STATUS[s.status] || { label: s.status, cls: 'ok', icon: 'ℹ️' };
       const changed = s.depLocal && s.depLocal !== App.localTime(leg.dep);
+      // On time and nothing new: the status stays inside the flight card only.
+      if ((s.status === 'scheduled' || s.status === 'ontime') && !changed && !s.gate) return '';
       return `<div class="status status-${st.cls} status-live">
         <span>${st.icon} <bdi>${esc(leg.flightNo)}</bdi> ${esc(st.label)}${changed ? ` · המראה <b>${esc(s.depLocal)}</b> <s>${App.localTime(leg.dep)}</s>` : ''}${s.gate ? ` · שער <b>${esc(s.gate)}</b>` : ''}</span>
         ${s.updatedAt ? `<small>${minutesAgo(s.updatedAt)}</small>` : ''}
@@ -146,6 +148,10 @@
       ${mode === 'tonight' && !opts.noBanner ? '<div class="tag">🌙 כאן ישנים הלילה</div>' : ''}
       ${banner}
       <p class="muted">📍 ${esc(h.city)} · ${esc(h.address)}</p>
+      ${h.whatsapp || h.phone ? `<div class="btn-row">
+        ${h.whatsapp ? `<a class="btn btn-wa" href="https://wa.me/${esc(h.whatsapp.replace(/\D/g, ''))}" target="_blank" rel="noopener">💬 וואטסאפ למלון</a>` : ''}
+        ${h.phone ? `<a class="btn" href="tel:${esc(h.phone.replace(/[^\d+]/g, ''))}">📞 התקשרות</a>` : ''}
+      </div>` : ''}
       <div class="facts">
         <div class="fact"><span>📅 תאריכים</span><b>${App.range(h.checkIn, h.checkOut)}</b><small>${nights} ${nights === 1 ? 'לילה' : 'לילות'}</small></div>
         <div class="fact"><span>🛎️ צ'ק אין</span><b>${tm.checkInTime}</b></div>
@@ -153,7 +159,6 @@
       </div>
       <div class="booking"><span>מספר הזמנה</span>${/\d/.test(h.booking) ? `<b class="code">${esc(h.booking)}</b>${copyBtn(h.booking)}` : `<b>${esc(h.booking)}</b>`}</div>
       <p>🛏️ ${esc(h.room)}</p>
-      ${h.phone ? `<a class="btn" href="tel:${esc(h.phone)}">📞 התקשר למלון</a>` : ''}
       <button class="btn btn-show" data-show-hotel="${h.id}">🪧 הראה לנהג</button>
       ${App.navButtons(`${h.name}, ${h.address}`)}
     </section>`;
@@ -178,6 +183,27 @@
         ${App.navButtons(a.mapQuery)}
         ${App.canEdit() ? `<button class="btn btn-done" data-done="${a.id}">${done ? '✅ עשינו!' : '☐ סמנו שעשינו'}</button>` : ''}`}
     </section>`;
+  };
+
+  // Attractions list: name, tags and a "done" tick; tap to open the description, address and navigation.
+  const attractionFold = (a) => {
+    const t = a.tags || {};
+    const done = App.isDone(a.id);
+    const tick = App.canEdit() ? `<button class="attr-tick${done ? ' on' : ''}" data-done="${a.id}" aria-pressed="${done}">${done ? '✅ עשינו' : '☐ עשינו?'}</button>` : '';
+    const summary = `<div class="card-title"><span class="ico ico-green">${t.water ? '🏝️' : '🧭'}</span><h3>${esc(a.name)}</h3>${a.mustSee ? '<span class="must">⭐ חובה</span>' : ''}</div>
+      <div class="chips">
+        ${t.duration ? `<span class="chip">⏱️ ${esc(t.duration)}</span>` : ''}
+        ${t.difficulty ? `<span class="chip">💪 ${esc(t.difficulty)}</span>` : ''}
+        ${t.water ? '<span class="chip">🏊 מים</span>' : ''}
+      </div>${tick}`;
+    const full = `<section class="card">
+      <div class="en">${esc(a.en)}</div>
+      <p>${esc(a.desc)}</p>
+      ${a.agentNote ? `<p class="agent">💬 עדי: "${esc(a.agentNote)}"</p>` : ''}
+      ${a.address || a.mapQuery ? `<p class="muted">📍 <bdi>${esc(a.address || a.mapQuery)}</bdi></p>` : ''}
+      ${App.navButtons(a.mapQuery)}
+    </section>`;
+    return fold('attr', a.id, false, summary, full, `style="--accent:${App.place(a.place).color}" ${done ? 'data-done-card' : ''}`);
   };
 
   // A checklist card. Travelers tick items; "עריכה" lets them add and delete items too.
@@ -213,6 +239,14 @@
     if (compact && App.store.get('push_dismissed', false)) return '';
     return `<div class="push-card">${compact ? '<button class="card-x" data-dismiss="push_dismissed" aria-label="סגירה">✕</button>' : ''}<p>🔔 ${compact ? 'רוצים תזכורת כל בוקר ועדכונים על הטיסות?' : 'תזכורת כל בוקר, ערב לפני טיסה, והודעה מיד כשטיסה משתנה.'}</p>
       <button class="btn btn-wide" data-push>🔔 הפעלת התראות</button><p class="muted" id="push-msg"></p></div>`;
+  };
+
+  // Info page: notifications in one line, near the bottom.
+  const pushLine = () => {
+    if (!App.pushAvailable()) return '';
+    if (App.pushOn()) return '<p class="push-line">🔔 התראות: <b>פעילות ✅</b></p>';
+    if (Notification.permission === 'denied') return '<p class="push-line">🔔 התראות חסומות. אפשר להפעיל אותן בהגדרות של Chrome לאתר.</p>';
+    return '<div class="push-line"><span>🔔 התראות כבויות</span><button class="btn" data-push>הפעלה</button></div><p class="muted" id="push-msg"></p>';
   };
 
   const noteBanner = () => App.trip.updatedNote ? `<div class="msg-banner">💌 ${esc(App.trip.updatedNote)}</div>` : '';
@@ -422,7 +456,7 @@
     const sel = placeKey || (order.includes(current) ? current : order[0]);
     return `<h1 class="page-h">🌴 אטרקציות</h1>
       <div class="tabs">${order.map((k) => `<a class="tab ${k === sel ? 'on' : ''}" href="#/attractions/${k}" style="--accent:${App.place(k).color}">${esc(App.place(k).name)}</a>`).join('')}</div>
-      ${T.attractions.filter((a) => a.place === sel).sort((a, b) => App.isDone(a.id) - App.isDone(b.id)).map((a) => attractionCard(a)).join('')}`;
+      ${T.attractions.filter((a) => a.place === sel).sort((a, b) => App.isDone(a.id) - App.isDone(b.id)).map(attractionFold).join('')}`;
   };
 
   const routeView = () => {
@@ -455,7 +489,6 @@
     return `<h1 class="page-h">ℹ️ מידע חשוב</h1>
       ${wa ? `<a class="btn btn-wide btn-wa" href="${wa}" target="_blank" rel="noopener">💬 וואטסאפ ל${esc(T.contact.name)}</a>` : ''}
       ${App.canInstall() ? `<section class="card"><div class="card-title"><span class="ico ico-teal">📲</span><h3>התקנה במסך הבית</h3></div>${App.installCard(false)}</section>` : ''}
-      ${App.pushAvailable() ? `<section class="card"><div class="card-title"><span class="ico ico-orange">🔔</span><h3>התראות</h3></div>${pushCard(false)}</section>` : ''}
       <section class="card"><div class="card-title"><span class="ico ico-red">🆘</span><h3>חירום</h3></div>
         <a class="btn" href="tel:${esc(I.emergencyPhone)}">📞 חירום בפיליפינים: ${esc(I.emergencyPhone)}</a>
         <div class="btn-row btn-row-21">
@@ -470,6 +503,7 @@
         <p>💵 המטבע: ${esc(I.currency.name)} (להמרה: כפתור 💱)</p></section>
       ${checklistCard('before', '📝', 'ico-blue', 'לפני הטיול')}
       ${checklistCard('packing', '🧳', 'ico-orange', 'רשימת אריזה')}
+      ${pushLine()}
       <div class="text-size"><span>גודל טקסט</span><button data-font="-1">א-</button><button data-font="1">א+</button><button class="font-reset" data-font="0">רגיל</button></div>
       ${App.user ? `<p class="muted center">מחוברים בתור ${esc(App.user.email)} · <a href="#" data-signout>התנתקות</a></p>` : ''}
       ${App.role === 'admin' ? '<a class="btn btn-wide" href="#/admin">⚙️ ניהול נתונים</a>' : ''}`;
