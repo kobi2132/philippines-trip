@@ -257,7 +257,8 @@
     const transfers = App.transfersOn(date);
     const out = App.hotelCheckingOut(date);
     const tonight = App.hotelForNight(date);
-    const attrs = (info.attractions || []).map(App.attraction).filter(Boolean);
+    // Every day in a place lists all of that place's attractions: the plan is loose, not day by day.
+    const attrs = info.place ? T.attractions.filter((a) => a.place === info.place) : [];
 
     let html = '';
     html += `
@@ -288,7 +289,7 @@
       html += hotelGuide(tonight, mode) + hotelFold(tonight, mode);
     }
     if (attrs.length) {
-      html += `<h2 class="section-h">🌴 מה אפשר לעשות היום</h2>`;
+      html += `<h2 class="section-h">🌴 מה אפשר לעשות ב${esc(p.name)}</h2>`;
       [...attrs].sort((a, b) => App.isDone(a.id) - App.isDone(b.id)).forEach((a) => { html += attractionFold(a, 'dayattr'); });
     }
     (info.tips || []).forEach((tip) => { html += `<div class="tip">💡 ${esc(tip)}</div>`; });
