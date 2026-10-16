@@ -50,7 +50,6 @@
       App.transfersOn(x.date).forEach((tr) => items.push(`🚕 ${esc(tr.title)}`));
       const inn = T.hotels.find((h) => h.checkIn === x.date);
       if (inn) items.push(`🏨 צ'ק אין ${ltr(inn.name)}`);
-      (x.attractions || []).map(App.attraction).filter(Boolean).forEach((a) => items.push(`🌴 ${esc(a.name)}`));
       (x.tips || []).forEach((tip) => items.push(`💡 ${esc(tip)}`));
       const p = App.place(x.place);
       return [
