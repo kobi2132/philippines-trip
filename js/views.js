@@ -86,7 +86,9 @@
   };
 
   // Online check-in is done with the airline of the first flight in the booking.
+  // [name, site, hours before departure it opens (24 if not given)]
   const CHECKIN = {
+    EY: ['Etihad', 'https://www.etihad.com/en/manage/check-in', 30],
     FZ: ['flydubai', 'https://www.flydubai.com/en/flying-with-us/check-in/online-check-in/'],
     PR: ['Philippine Airlines', 'https://www.philippineairlines.com/ph/en/check-in-online.html'],
     '5J': ['Cebu Pacific', 'https://book.cebupacificair.com/Checkin/Retrieve'],
@@ -331,7 +333,7 @@
         <h1>${esc(T.travelers)}</h1>
         <p>${esc(T.title)} בעוד</p>
         <div class="countdown"><b>${days}</b><span>${days === 1 ? 'יום' : 'ימים'}</span></div>
-        <p class="muted">המראה ב${App.longDate(T.start)}, ${App.localTime(T.flights[0].legs[0].dep)}</p>
+        <p class="muted">המראה ב${App.longDate(App.localDate(T.flights[0].legs[0].dep))}, ${App.localTime(T.flights[0].legs[0].dep)}${App.localDate(T.flights[0].legs[0].dep) > T.start ? `<br>(בלילה שבין ${App.weekday(T.start)} ל${App.weekday(App.localDate(T.flights[0].legs[0].dep))})` : ''}</p>
       </header>
       <a class="btn btn-wide" href="#/day/${T.start}">👀 להציץ ביום הראשון</a>
       ${checklistCard('before', '📝', 'ico-blue', 'מה עוד צריך לעשות לפני הטיול')}
@@ -361,7 +363,9 @@
   // Day before a flight: online check-in opens 24 hours before departure.
   const checkinReminder = (f) => {
     const c = CHECKIN[f.legs[0].flightNo.slice(0, 2)];
-    return `<div class="guide guide-checkin"><span>✅ מחר טיסה (${esc(f.legs[0].from.city || f.legs[0].from.name)} ← ${esc(f.legs[f.legs.length - 1].to.city || f.legs[f.legs.length - 1].to.name)}). צ'ק אין אונליין נפתח היום ב-<b>${App.localTime(f.legs[0].dep)}</b></span>
+    const opens = App.shiftIso(f.legs[0].dep, -60 * ((c && c[2]) || 24));
+    const when = App.localDate(opens) < App.addDays(f.date, -1) ? 'כבר פתוח' : `נפתח היום ב-<b>${App.localTime(opens)}</b>`;
+    return `<div class="guide guide-checkin"><span>✅ מחר טיסה (${esc(f.legs[0].from.city || f.legs[0].from.name)} ← ${esc(f.legs[f.legs.length - 1].to.city || f.legs[f.legs.length - 1].to.name)}). צ'ק אין אונליין ${when}</span>
       ${c ? `<a class="copy checkin" href="${c[1]}" target="_blank" rel="noopener">צ'ק אין</a>` : ''}</div>`;
   };
 
@@ -374,7 +378,9 @@
 
   const flightGuide = (f) => {
     const c = f.connection;
+    const depDate = App.localDate(f.legs[0].dep);
     return `<div class="guide">🕐 להיות בשדה התעופה עד <b>${App.airportBy(f)}</b></div>
+      ${depDate > f.date ? `<div class="guide">🌙 ההמראה אחרי חצות: ${App.weekday(depDate)} <bdi>${App.shortDate(depDate)}</bdi> ב-<b>${App.localTime(f.legs[0].dep)}</b></div>` : ''}
       ${c ? `<div class="guide ${c.terminalChange ? 'guide-warn' : ''}">🔁 יש קונקשן ב${esc(c.airport)} (${esc(c.duration)}), שימו לב${c.terminalChange ? ': צריך להחליף טרמינל' : ''}</div>` : ''}`;
   };
 
@@ -396,7 +402,7 @@
     const nextDay = App.localDate(last.arr) !== App.localDate(first.dep);
     const [tag, route] = splitTitle(f.title);
     return `<div class="card-title"><span class="ico ico-blue">✈️</span><h3>${tag ? `<span class="title-tag">${esc(tag)}</span>` : ''}${esc(route)}</h3></div>
-      <div class="fold-line"><span>📅 ${App.weekday(f.date)} <bdi>${App.shortDate(f.date)}</bdi></span>
+      <div class="fold-line"><span>📅 ${App.weekday(App.localDate(first.dep))} <bdi>${App.shortDate(App.localDate(first.dep))}</bdi></span>
         <span>המראה <b>${App.localTime(first.dep)}</b></span>
         <span>נחיתה <b>${App.localTime(last.arr)}</b>${nextDay ? '<sup>+1</sup>' : ''}</span></div>
       <div class="fold-sub"><bdi>${f.legs.map((l) => esc(l.flightNo)).join(' · ')}</bdi></div>
