@@ -64,8 +64,10 @@ export function plannedReminders(trip) {
 
   for (const f of trip.flights) {
     const eve = addDays(f.date, -1);
-    // No evening reminder when they spend that evening flying.
-    if (eve < addDays(trip.start, -1) || flightOn(trip, eve)) continue;
+    // No evening reminder when they spend that evening flying (an earlier flight that day is fine).
+    const eveFlight = flightOn(trip, eve);
+    const flyingAt8 = eveFlight && new Date(eveFlight.legs[eveFlight.legs.length - 1].arr) > zonedTime(eve, '20:00', tzOfDeparture(f));
+    if (eve < addDays(trip.start, -1) || flyingAt8) continue;
     const out1 = hotelCheckingOut(trip, f.date);
     out.push({ key: `eve_${f.date}`, date: eve, time: '20:00', tz: tzOfDeparture(f),
       title: `🧳 מחר טסים ל${f.legs[f.legs.length - 1].to.city}`,
