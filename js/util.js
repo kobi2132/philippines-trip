@@ -25,6 +25,12 @@ window.App = window.App || {};
   // e.g. "2026-11-06T10:40:00+02:00". Shown exactly as written (local time there).
   const localTime = (iso) => iso ? iso.slice(11, 16) : '';
   const localDate = (iso) => iso ? iso.slice(0, 10) : '';
+  // Moves a time by some minutes, keeping it written in the same airport's offset.
+  const shiftIso = (iso, mins) => {
+    const off = iso.slice(19), m = off.match(/([+-])(\d\d):(\d\d)/);
+    const offMin = m ? (m[1] === '-' ? -1 : 1) * (Number(m[2]) * 60 + Number(m[3])) : 0;
+    return new Date(new Date(iso).getTime() + (mins + offMin) * 60000).toISOString().slice(0, 19) + off;
+  };
   const minusMinutes = (hhmm, mins) => {
     const [h, m] = hhmm.split(':').map(Number);
     let t = h * 60 + m - mins; t = ((t % 1440) + 1440) % 1440;
@@ -65,6 +71,6 @@ window.App = window.App || {};
 
   Object.assign(App, {
     esc, parseDate, fmtDate, addDays, daysBetween, weekday, shortDate, range, longDate,
-    localTime, localDate, minusMinutes, duration, now, today, isPreview, mapsUrl, navButtons, store,
+    localTime, localDate, shiftIso, minusMinutes, duration, now, today, isPreview, mapsUrl, navButtons, store,
   });
 })(window.App);
