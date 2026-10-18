@@ -70,7 +70,7 @@ The repo is **public**: never commit personal trip data (bookings, phone numbers
 - Always pass user data through `App.esc()`. Wrap dates and numbers that sit inside Hebrew in `<bdi>` (`App.range()`), and keep Latin codes (flight numbers, bookings, phones) `dir="ltr"`, or they flip.
 - Number ranges use a plain hyphen (`30-60`), not an en dash; `esc()` converts it.
 - Modals: `.modal-box` defaults to ltr, give each box its own rtl class.
-- Flight, hotel and transfer cards are folding `details` cards; one open per list. The next flight and tonight's hotel open by default.
+- Flight, hotel and transfer cards are folding `details` cards; one open per list. Lists start closed; a tag marks the next flight and tonight's hotel (decision in #13). A flight still on its way the day after `date` (connection, landing) shows on that day too.
 - Navigation buttons open Google Maps (`App.navButtons`). Hotels have WhatsApp/call buttons and "🪧 הראה לנהג".
 - Phases: `before` (countdown home with the "before" list; packing list joins in the last 7 days), `eve` (day before: flight card, packing and before lists), `trip` (today = day page), `after` (summary).
 - Text-size buttons and the push row stay at the bottom of the Info screen (Jacob's choice). The FX button hides on scroll down and on the login screen.

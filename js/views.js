@@ -283,6 +283,8 @@
     if (out && (!tonight || out.id !== tonight.id)) html += hotelGuide(out, 'checkout') + hotelFold(out, 'checkout');
     const pre = transfers.filter((t) => t.navTo && !t.toHotel);
     const post = transfers.filter((t) => !(t.navTo && !t.toHotel));
+    // Still flying from yesterday: where the connection leaves from and when they land.
+    App.flightsContinuing(date).forEach((f) => { html += continuingGuide(f, date) + flightLive(f) + fold('day', f.id, false, flightSummary(f), flightCard(f)); });
     pre.forEach((t) => { html += transferFold(t); });
     flights.forEach((f) => { html += flightGuide(f) + flightLive(f) + fold('day', f.id, false, flightSummary(f), flightCard(f)); });
     post.forEach((t) => { html += transferFold(t); });
@@ -384,6 +386,13 @@
       ${c ? `<div class="guide ${c.terminalChange ? 'guide-warn' : ''}">🔁 יש קונקשן ב${esc(c.airport)} (${esc(c.duration)}), שימו לב${c.terminalChange ? ': צריך להחליף טרמינל' : ''}</div>` : ''}`;
   };
 
+  const continuingGuide = (f, date) => {
+    const last = f.legs[f.legs.length - 1];
+    const conns = f.legs.slice(1).filter((l) => App.localDate(l.dep) === date);
+    return conns.map((l) => `<div class="guide">🔁 ממשיכים מ${esc(l.from.city || l.from.name)} ב-<b>${App.localTime(l.dep)}</b> <bdi>(${esc(l.flightNo)})</bdi></div>`).join('')
+      + (App.localDate(last.arr) === date ? `<div class="guide">🛬 נוחתים ב${esc(last.to.city || last.to.name)} ב-<b>${App.localTime(last.arr)}</b></div>` : '');
+  };
+
   const hotelGuide = (h, mode) => {
     const tm = App.hotelTimes(h);
     if (mode === 'checkout') return `<div class="guide guide-warn">🧳 צ'ק אאוט היום עד <b>${tm.checkOutTime}</b></div>`;
@@ -446,7 +455,9 @@
 
   const attractionsView = (placeKey) => {
     const T = App.trip;
-    const order = [...new Set(T.attractions.map((a) => a.place))];
+    // Tabs in the order the trip visits the places; places not on the days list go last.
+    const visit = (k) => { const i = T.days.findIndex((d) => d.place === k); return i < 0 ? Infinity : i; };
+    const order = [...new Set(T.attractions.map((a) => a.place))].sort((a, b) => visit(a) - visit(b));
     const current = App.dayInfo(App.today()).place;
     const sel = placeKey || (order.includes(current) ? current : order[0]);
     return `<h1 class="page-h">🌴 אטרקציות</h1>

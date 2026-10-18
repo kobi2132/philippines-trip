@@ -13,6 +13,9 @@
   const hotelForNight = (date) => T().hotels.find((h) => h.checkIn <= date && date < h.checkOut);
   const hotelCheckingOut = (date) => T().hotels.find((h) => h.checkOut === date);
   const flightsOn = (date) => T().flights.filter((f) => f.date === date);
+  // A flight booked on an earlier day that is still on its way this day (a connection, a landing).
+  const flightsContinuing = (date) => T().flights.filter((f) => f.date < date
+    && f.legs.some((l) => App.localDate(l.arr) === date || App.localDate(l.dep) === date));
   const transfersOn = (date) => T().transfers.filter((t) => t.date === date);
   const attraction = (id) => T().attractions.find((a) => a.id === id);
 
@@ -40,7 +43,7 @@
   };
 
   Object.assign(App, {
-    place, dayInfo, hotelById, hotelTimes, hotelForNight, hotelCheckingOut, flightsOn, transfersOn,
+    place, dayInfo, hotelById, hotelTimes, hotelForNight, hotelCheckingOut, flightsOn, flightsContinuing, transfersOn,
     attraction, totalDays, dayNumber, phase, airportBy, statusKey, legStatus, nextFlight,
   });
 })(window.App);
