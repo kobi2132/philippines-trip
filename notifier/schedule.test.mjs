@@ -89,3 +89,10 @@ test('telegram: flight day morning at the push reminder time', () => {
   assert.equal(r.at.toISOString(), '2026-11-06T03:40:00.000Z'); // 05:40 Israel
   assert.match(r.text, /07:40/);
 });
+
+test('evening reminder still comes after a daytime flight that landed', () => {
+  const t2 = { ...trip, end: '2026-11-10', days: [...trip.days, { date: '2026-11-10', place: 'israel' }],
+    flights: [...trip.flights, { date: '2026-11-09', international: true, booking: 'CCC', legs: [leg('F3', '2026-11-09T18:05:00+08:00', '2026-11-10T10:20:00+02:00', 'MNL')] }] };
+  const keys = plannedReminders(t2).map((r) => r.key);
+  assert.ok(keys.includes('eve_2026-11-09')); // F2 landed at 13:00 on the 8th
+});
