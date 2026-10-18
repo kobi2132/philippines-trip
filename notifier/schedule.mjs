@@ -20,6 +20,8 @@ const addDays = (date, n) => { const d = new Date(date + 'T12:00:00Z'); d.setUTC
 const shortDate = (date) => `${Number(date.slice(8, 10))}.${Number(date.slice(5, 7))}`;
 const localTime = (iso) => iso.slice(11, 16);
 
+// A flight that takes off after midnight says so, so 00:50 isn't read as this morning.
+const depWhen = (f) => f.legs[0].dep.slice(0, 10) > f.date ? `${localTime(f.legs[0].dep)} בלילה (${shortDate(f.legs[0].dep.slice(0, 10))})` : localTime(f.legs[0].dep);
 export const airportBy = (f) => fromMin(toMin(localTime(f.legs[0].dep)) - (f.international ? 180 : 120));
 
 const hotelCheckingOut = (trip, date) => trip.hotels.find((h) => h.checkOut === date);
@@ -31,8 +33,12 @@ export function plannedReminders(trip) {
   const names = trip.travelers;
   const link = (date) => `#/day/${date}`;
 
-  out.push({ key: 'etravel', date: addDays(trip.start, -2), time: '10:00', tz: 'Asia/Jerusalem',
-    title: '📝 עוד יומיים טסים!', body: 'זה הזמן למלא את טופס eTravel של הפיליפינים ולבדוק את הרשימה באפליקציה.', link: '#/today' });
+  // eTravel opens 72h before landing in the Philippines: the first 10:00 in Israel inside that window.
+  const landing = new Date(trip.flights[0].legs[trip.flights[0].legs.length - 1].arr);
+  let etravelDate = localParts(new Date(landing.getTime() - 72 * 3600e3), 'Asia/Jerusalem').date;
+  if (zonedTime(etravelDate, '10:00', 'Asia/Jerusalem') < landing.getTime() - 72 * 3600e3) etravelDate = addDays(etravelDate, 1);
+  out.push({ key: 'etravel', date: etravelDate, time: '10:00', tz: 'Asia/Jerusalem',
+    title: '📝 זה הזמן למלא eTravel', body: 'זה הזמן למלא את טופס eTravel של הפיליפינים ולבדוק את הרשימה באפליקציה.', link: '#/today' });
   out.push({ key: 'packing', date: addDays(trip.start, -1), time: '10:00', tz: 'Asia/Jerusalem',
     title: '🎒 מחר טסים! הגיע הזמן לארוז', body: `${names}, רשימת האריזה מחכה באפליקציה. מחר להיות בנתב"ג עד ${airportBy(trip.flights[0])}.`, link: '#/today' });
 
@@ -45,7 +51,7 @@ export function plannedReminders(trip) {
       const time = fromMin(Math.min(toMin('08:00'), toMin(airportBy(f)) - 120));
       out.push({ key: `morning_${day.date}`, date: day.date, time, tz: tzOfDeparture(f),
         title: `✈️ יום טיסה: ${f.legs[0].from.city} ← ${f.legs[f.legs.length - 1].to.city}`,
-        body: `טיסה ${f.legs[0].flightNo} ב-${localTime(f.legs[0].dep)}. להיות בשדה עד ${airportBy(f)}. מספר הזמנה: ${f.booking}`,
+        body: `טיסה ${f.legs[0].flightNo} ב-${depWhen(f)}. להיות בשדה עד ${airportBy(f)}. מספר הזמנה: ${f.booking}`,
         link: link(day.date) });
     } else if (day.date !== trip.end) {
       const hotelOut = hotelCheckingOut(trip, day.date);
@@ -63,7 +69,7 @@ export function plannedReminders(trip) {
     const out1 = hotelCheckingOut(trip, f.date);
     out.push({ key: `eve_${f.date}`, date: eve, time: '20:00', tz: tzOfDeparture(f),
       title: `🧳 מחר טסים ל${f.legs[f.legs.length - 1].to.city}`,
-      body: `טיסה ${f.legs[0].flightNo} ב-${localTime(f.legs[0].dep)}. להיות בשדה עד ${airportBy(f)}.${out1 ? ` צ'ק אאוט מ-${out1.name}.` : ''} כדאי לארוז הערב.`,
+      body: `טיסה ${f.legs[0].flightNo} ב-${depWhen(f)}. להיות בשדה עד ${airportBy(f)}.${out1 ? ` צ'ק אאוט מ-${out1.name}.` : ''} כדאי לארוז הערב.`,
       link: link(f.date) });
   }
   return out;
@@ -152,8 +158,11 @@ export function telegramFlightText(leg, a) {
 
 export const telegramErrorText = (leg, message) => lines('⚠️ בדיקת הטיסות נכשלה', [['טיסה', leg && leg.flightNo], ['מסלול', leg && legRoute(leg)], ['פרטים', message]]);
 
+// Hours before departure that online check-in opens, when not 24.
+const CHECKIN_HOURS = { EY: 30 };
 // Online check-in sites, by the airline code of the booking's first flight.
 export const CHECKIN = {
+  EY: 'https://www.etihad.com/en/manage/check-in',
   FZ: 'https://www.flydubai.com/en/flying-with-us/check-in/online-check-in/',
   PR: 'https://www.philippineairlines.com/ph/en/check-in-online.html',
   '5J': 'https://book.cebupacificair.com/Checkin/Retrieve',
@@ -171,14 +180,14 @@ export function telegramReminders(trip) {
     f.legs.forEach((leg, i) => {
       const link = CHECKIN[leg.flightNo.slice(0, 2)];
       const part = f.legs.length > 1 ? ` (${i + 1} מתוך ${f.legs.length})` : '';
-      out.push({ key: `tg_checkin_${f.date}_${leg.flightNo}`, at: new Date(new Date(leg.dep).getTime() - 24 * 3600e3),
+      out.push({ key: `tg_checkin_${f.date}_${leg.flightNo}`, at: new Date(new Date(leg.dep).getTime() - (CHECKIN_HOURS[leg.flightNo.slice(0, 2)] || 24) * 3600e3),
         text: lines(`✅ צ'ק אין פתוח${part}`, [
           ['טיסה', leg.flightNo], ['מסלול', legRoute(leg)], ['תאריך', shortDate(leg.dep.slice(0, 10))],
           ['בשעה', localTime(leg.dep)], ['הזמנה', `<code>${f.booking}</code>`], ["צ'ק אין", link]]) });
       if (morning) {
         out.push({ key: i ? `tg_day_${f.date}_${i + 1}` : `tg_day_${f.date}`, at: zonedTime(morning.date, morning.time, tzOfDeparture(f)),
           text: lines(`✈️ היום טסים${part}`, [
-            ['טיסה', leg.flightNo], ['מסלול', legRoute(leg)], ['תאריך', i ? shortDate(leg.dep.slice(0, 10)) : null], ['בשעה', localTime(leg.dep)],
+            ['טיסה', leg.flightNo], ['מסלול', legRoute(leg)], ['תאריך', i || leg.dep.slice(0, 10) > f.date ? shortDate(leg.dep.slice(0, 10)) : null], ['בשעה', localTime(leg.dep)],
             i ? ['קונקשן ב', leg.from.city || leg.from.code] : ['להיות בשדה עד', `<b>${airportBy(f)}</b>`],
             ['הזמנה', `<code>${f.booking}</code>`]]) });
       }
