@@ -27,6 +27,8 @@
     tabbar().innerHTML = TABS.map(([k, ico, label]) =>
       `<a href="#/${k}" class="${k === active ? 'on' : ''}"><span class="tab-ico">${ico}</span><span>${label}</span></a>`).join('');
     if (!document.querySelector('.fx-fab')) { document.body.insertAdjacentHTML('beforeend', App.fxButton()); App.refreshFxRate(); }
+    // No peso converter on the days they are in Israel.
+    document.body.classList.toggle('at-home', App.dayInfo(App.today()).place === 'israel');
     fillWeather();
     onScroll();
   };

@@ -356,6 +356,7 @@ p.push-line { justify-content: flex-start; }
 
 /* FX button steps aside while scrolling down */
 .fx-fab { transition: transform .25s, opacity .25s; }
+body.at-home .fx-fab { display: none; }
 body.scroll-down .fx-fab { transform: translateY(90px); opacity: 0; pointer-events: none; }
 .tabs-wrap { flex-wrap: wrap; overflow: visible; mask-image: none; -webkit-mask-image: none; margin-top: 12px; justify-content: center; }
 
