@@ -307,7 +307,8 @@
         <div class="big-callout">🕐 מחר צריך להיות בנתב"ג עד <b>${App.airportBy(f)}</b></div>
       </section>
       ${fold('day', f.id, false, flightSummary(f), flightCard(f))}
-      ${checklistCard('packing', '🧳', 'ico-orange', 'רשימת אריזה')}`;
+      ${checklistCard('packing', '🧳', 'ico-orange', 'רשימת אריזה')}
+      ${checklistCard('before', '📝', 'ico-blue', 'מה עוד צריך לעשות לפני הטיול')}`;
   };
 
   const afterContent = () => {
@@ -335,7 +336,8 @@
         <p class="muted">המראה ב${App.longDate(App.localDate(T.flights[0].legs[0].dep))}, ${App.localTime(T.flights[0].legs[0].dep)}${App.localDate(T.flights[0].legs[0].dep) > T.start ? `<br>(בלילה שבין ${App.weekday(T.start)} ל${App.weekday(App.localDate(T.flights[0].legs[0].dep))})` : ''}</p>
       </header>
       <a class="btn btn-wide" href="#/day/${T.start}">👀 להציץ ביום הראשון</a>
-      ${checklistCard('before', '📝', 'ico-blue', 'מה עוד צריך לעשות לפני הטיול')}`;
+      ${checklistCard('before', '📝', 'ico-blue', 'מה עוד צריך לעשות לפני הטיול')}
+      ${days <= 7 ? checklistCard('packing', '🧳', 'ico-orange', 'רשימת אריזה') : ''}`;
   };
 
   const todayView = () => {
@@ -494,8 +496,6 @@
         <p>🕐 ${esc(I.timeDiff)}</p><p class="clocks" data-clocks>${App.clocks()}</p>
         <p>🔌 ${esc(I.plug)}</p>
         <p>💵 המטבע: ${esc(I.currency.name)} (להמרה: כפתור 💱)</p></section>
-      ${checklistCard('before', '📝', 'ico-blue', 'לפני הטיול')}
-      ${checklistCard('packing', '🧳', 'ico-orange', 'רשימת אריזה')}
       ${pushLine()}
       <div class="text-size"><span>גודל טקסט</span><button data-font="-1">א-</button><button data-font="1">א+</button><button class="font-reset" data-font="0">רגיל</button></div>
       ${App.user ? `<p class="muted center">מחוברים בתור ${esc(App.user.email)} · <a href="#" data-signout>התנתקות</a></p>` : ''}
