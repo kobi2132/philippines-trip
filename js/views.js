@@ -482,8 +482,19 @@
     const order = [...new Set(T.attractions.map((a) => a.place))].sort((a, b) => visit(a) - visit(b));
     const current = App.dayInfo(App.today()).place;
     const sel = placeKey || (order.includes(current) ? current : order[0]);
+    // Dates under each place; a place visited twice (Manila) gets both stays.
+    const stays = (k) => {
+      const runs = [];
+      T.days.forEach((d, i) => {
+        if (d.prep || d.place !== k) return;
+        if (i && T.days[i - 1].place === k && runs.length) runs[runs.length - 1][1] = d.date;
+        else runs.push([d.date, d.date]);
+      });
+      return runs.map(([a, z]) => `<bdi>${a === z ? App.shortDate(a) : `${App.parseDate(a).getDate()}-${App.shortDate(z)}`}</bdi>`).join(', ');
+    };
+    // All places at once in a grid: nothing hidden off screen, nothing to scroll sideways.
     return `<h1 class="page-h">🌴 אטרקציות</h1>
-      <div class="tabs">${order.map((k) => `<a class="tab ${k === sel ? 'on' : ''}" href="#/attractions/${k}" style="--accent:${App.place(k).color}">${esc(App.place(k).name)}</a>`).join('')}</div>
+      <div class="place-grid">${order.map((k) => `<a class="${k === sel ? 'on' : ''}" href="#/attractions/${k}" style="--accent:${App.place(k).color}">${esc(App.place(k).name)}<small>${stays(k)}</small></a>`).join('')}</div>
       ${T.attractions.filter((a) => a.place === sel).sort((a, b) => App.isDone(a.id) - App.isDone(b.id)).map(attractionFold).join('')}`;
   };
 
