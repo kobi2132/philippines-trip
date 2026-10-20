@@ -76,7 +76,8 @@ The repo is **public**: never commit personal trip data (bookings, phone numbers
 - Navigation buttons open Google Maps (`App.navButtons`). Hotels have WhatsApp/call buttons and "🪧 הראה לנהג".
 - Phases: `before` (countdown home with the "before" list; packing list joins in the last 7 days), `eve` (day before: flight card, packing and before lists), `trip` (today = day page), `after` (summary).
 - Text-size buttons and the push row stay at the bottom of the Info screen (Jacob's choice). The FX button hides on scroll down, on the login screen and on days in Israel.
-- Parked by Jacob (don't build without asking): day timeline, next-item highlight, leave-time calculation (code on branch `claude/ux-proposals`); logo/app name still under discussion.
+- Parked by Jacob (don't build without asking): day timeline, next-item highlight, leave-time calculation (code on branch `claude/ux-proposals`).
+- App name "יאללה טסים" with the logo `icons/logo.png` (Gemini symbol; the name is set in Rubik, never drawn in the image). It shows on the login screen, the countdown home and as the phone app icon (`icons/icon-192/512.png`, symbol on sky blue).
 
 ## Notifier (`notifier/`, GitHub Actions)
 

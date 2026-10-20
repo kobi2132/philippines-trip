@@ -1,9 +1,9 @@
 // Offline support: app files are cached; bump VERSION to ship an update.
-const VERSION = 'v46';
+const VERSION = 'v47';
 const FILES = [
   './', 'index.html', 'manifest.webmanifest', 'css/app.css',
   'js/config.js', 'js/util.js', 'js/shared.js', 'js/install.js', 'js/fx.js', 'js/trip.js', 'js/map.js', 'js/views.js', 'js/print.js', 'js/backend.js', 'js/main.js',
-  'icons/icon-192.png', 'icons/icon-512.png',
+  'icons/icon-192.png', 'icons/icon-512.png', 'icons/logo.png',
   ...[
     'today', 'flights', 'hotels', 'attractions', 'route', 'info', 'takeoff', 'landing', 'ferry', 'car', 'taxi', 'bus',
     'call', 'chat', 'navigate', 'show-driver', 'copy', 'booking', 'checkin', 'done', 'edit', 'bell', 'text-size', 'fx',

@@ -199,6 +199,11 @@ small { font-size: .85rem; }
 /* hero / before trip */
 .hero { text-align: center; padding: 10px 12px 4px; }
 .hero-emoji { font-size: 2rem; line-height: 1.2; }
+.brand { display: inline-flex; align-items: center; gap: 8px; font-weight: 800; font-size: 1.15rem; color: var(--teal); }
+.brand img { width: 52px; height: 52px; }
+.brand-logo-big { width: 128px; height: 128px; display: block; margin: 0 auto; }
+.brand-name-big { font-size: 2rem; font-weight: 800; color: var(--teal); margin: 4px 0 0; }
+.brand-sub { font-size: 1.1rem; font-weight: 700; margin: 0 0 8px; }
 .hero h1 { font-size: 1.7rem; font-weight: 800; margin-top: 2px; }
 .hero > p { font-size: 1.05rem; margin: 4px 0; }
 /* Countdown keeps its original (19px-base) size on purpose: Jacob likes it big. */
