@@ -100,7 +100,7 @@
   App.showScreen = (name) => {
     tabbar().hidden = true;
     document.querySelectorAll('.fx-fab').forEach((b) => b.remove());
-    main().innerHTML = SCREENS[name]();
+    main().innerHTML = App.iconize(SCREENS[name]());
   };
 
   // ---------- admin ----------
@@ -224,7 +224,7 @@
           App.store.set(key, w);
         } catch (e) { if (!w) continue; }
       }
-      el.innerHTML = `<span class="wx-ico">${WMO(w.code)}</span> ${w.max}°/${w.min}° · 💧 ${w.rain ?? 0}% גשם`;
+      el.innerHTML = App.iconize(`<span class="wx-ico">${WMO(w.code)}</span> ${w.max}°/${w.min}° · 💧 ${w.rain ?? 0}% גשם`);
     }
   }
 
@@ -250,13 +250,13 @@
     if (!t) return;
     if (t.matches('.arrow.off')) { e.preventDefault(); return; }
     if (t.hasAttribute('data-fx')) {
-      document.body.insertAdjacentHTML('beforeend', App.fxModal());
+      document.body.insertAdjacentHTML('beforeend', App.iconize(App.fxModal()));
       App.fitFxModal();
       document.getElementById('fx-php').focus();
     } else if (t.hasAttribute('data-install')) {
       App.promptInstall();
     } else if (t.hasAttribute('data-install-help')) {
-      document.body.insertAdjacentHTML('beforeend', App.installHelpModal());
+      document.body.insertAdjacentHTML('beforeend', App.iconize(App.installHelpModal()));
     } else if (t.dataset.dismiss) {
       App.store.set(t.dataset.dismiss, true); App.render();
     } else if (t.hasAttribute('data-push')) {
@@ -386,11 +386,11 @@
       const res = await fetch('version.json', { cache: 'no-store' });
       const { v } = await res.json();
       if (v && v !== myVersion) {
-        document.body.insertAdjacentHTML('beforeend', `
+        document.body.insertAdjacentHTML('beforeend', App.iconize(`
           <div id="update-bar" class="update-bar" role="status">
             <span>✨ גרסה חדשה מוכנה</span>
             <button class="btn" onclick="location.reload()">🔄 עדכון</button>
-          </div>`);
+          </div>`));
       }
     } catch (e) { /* offline: try again later */ }
   }

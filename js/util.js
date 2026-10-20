@@ -67,12 +67,18 @@ window.App = window.App || {};
   // Our own icons replace the phone's emoji in everything the app renders. Only text between
   // tags is touched, so attributes stay as written. One emoji = one meaning across the app.
   const ICONS = {
-    '🏠': 'today', '✈️': 'flights', '🏨': 'hotels', '🌴': 'attractions', '🏝️': 'attractions', '🗺️': 'route', 'ℹ️': 'info',
-    '🛫': 'takeoff', '🛬': 'landing', '⛴️': 'ferry', '🚕': 'taxi', '🚌': 'bus', '🚶': 'walk',
+    '🏠': 'today', '🏡': 'today', '✈️': 'flights', '🏨': 'hotels', '🌴': 'attractions', '🏝️': 'attractions', '🗺️': 'route', 'ℹ️': 'info',
+    '🛫': 'takeoff', '🛬': 'landing', '⛴️': 'ferry', '🚗': 'car', '🚕': 'taxi', '🚌': 'bus', '🚶': 'walk',
     '📞': 'call', '💬': 'chat', '🧭': 'navigate', '🪧': 'show-driver', '📋': 'copy', '🔖': 'booking', '📱': 'checkin',
-    '✅': 'done', '✏️': 'edit', '🔔': 'bell', '🔎': 'text-size', '💱': 'fx',
-    '📅': 'date', '🕐': 'time', '⏱️': 'duration', '📍': 'place', '🌙': 'night', '🛎️': 'reception', '🧳': 'suitcase',
-    '📝': 'checklist', '🆘': 'sos', '🏊': 'water', '⭐': 'must', '💪': 'boot',
+    '✅': 'done', '✔️': 'done', '✏️': 'edit', '🔔': 'bell', '🔎': 'text-size', '💱': 'fx',
+    '📅': 'date', '🕐': 'time', '🕘': 'time', '⏱️': 'duration', '📍': 'place', '🌙': 'night', '🛎️': 'reception',
+    '🧳': 'suitcase', '🎒': 'suitcase', '📝': 'checklist', '🆘': 'sos', '🏊': 'water', '⭐': 'must', '💪': 'boot',
+    '🚪': 'gate', '🎫': 'ticket', '🔒': 'lock', '📡': 'radar', '🔁': 'connection', '🔀': 'connection', '⚠️': 'warning',
+    '👍': 'thumbs-up', '🔗': 'link', '🛏️': 'bed', '💡': 'tip', '💌': 'message',
+    '👀': 'eye', '👁️': 'eye', '➕': 'add', '🗑️': 'trash', '↩️': 'back', '👇': 'more', '👆': 'less', '📲': 'install',
+    '🌐': 'web', '🛡️': 'shield', '🔌': 'plug', '💵': 'money', '⚙️': 'settings',
+    '☀️': 'sun', '🌤️': 'partly', '☁️': 'cloud', '🌫️': 'fog', '🌧️': 'rain', '🌦️': 'showers', '⛈️': 'storm', '💧': 'drop',
+    '✨': 'sparkles', '🎉': 'sparkles', '🔄': 'refresh', '🔑': 'key', '📶': 'offline',
   };
   const ICON_RE = new RegExp(`(${Object.keys(ICONS).map((k) => k.replace('\uFE0F', '')).join('|')})\uFE0F?`, 'gu');
   const icon = (name) => `<img class="ic" src="icons/ui/${name}.png" alt="" aria-hidden="true">`;

@@ -35,7 +35,7 @@ The repo is **public**: never commit personal trip data (bookings, phone numbers
 | `js/install.js` | Install prompt (Android one tap, iPhone how-to) |
 | `js/map.js` | Route map (real coastlines) |
 | `js/print.js` | Admin "ייצוא ל-PDF" printable summary |
-| `icons/ui/` | Our own icons (96px PNG, cut from Jacob's Gemini sheets); listed in `sw.js` |
+| `icons/ui/` | Our own icons (96px PNG, soft pastel line style, cut from Jacob's Gemini sheets); listed in `sw.js` |
 | `sw.js` | Offline cache + push display |
 | `notifier/` | Scheduled job: reminders, flight status, Telegram |
 | `firebase/firestore.rules` | Access rules (Jacob pastes them into the Firebase console) |

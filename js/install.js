@@ -70,7 +70,7 @@
     </div>`;
 
   App.promptInstall = async () => {
-    if (!deferred) { document.body.insertAdjacentHTML('beforeend', App.installHelpModal()); return; }
+    if (!deferred) { document.body.insertAdjacentHTML('beforeend', App.iconize(App.installHelpModal())); return; }
     deferred.prompt();
     const { outcome } = await deferred.userChoice;
     deferred = null;
