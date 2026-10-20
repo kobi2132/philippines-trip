@@ -75,13 +75,13 @@ The repo is **public**: never commit personal trip data (bookings, phone numbers
 - Icons: views keep writing emoji; `App.iconize` (in `js/util.js`, run in `App.render`) swaps every emoji listed in `App.ICONS` for our own image from `icons/ui/`. One emoji = one meaning (✅ only means done). A new icon: add the PNG, its emoji in `ICONS`, and its name in `sw.js`. The admin screen keeps plain emoji (its JSON editor).
 - Navigation buttons open Google Maps (`App.navButtons`). Hotels have WhatsApp/call buttons and "🪧 הראה לנהג".
 - Phases: `before` (countdown home with the "before" list; packing list joins in the last 7 days), `eve` (day before: flight card, packing and before lists), `trip` (today = day page), `after` (summary).
-- Text-size buttons and the push row stay at the bottom of the Info screen (Jacob's choice). The FX button hides on scroll down and on the login screen.
+- Text-size buttons and the push row stay at the bottom of the Info screen (Jacob's choice). The FX button hides on scroll down, on the login screen and on days in Israel.
 - Parked by Jacob (don't build without asking): day timeline, next-item highlight, leave-time calculation (code on branch `claude/ux-proposals`); logo/app name still under discussion.
 
 ## Notifier (`notifier/`, GitHub Actions)
 
 - `.github/workflows/notifier.yml` runs every 5 minutes in Oct-Nov; `run.mjs` decides what is due. Pure logic in `schedule.mjs` with tests in `schedule.test.mjs` (`cd notifier && node --test`); keep new logic pure and tested.
-- Push (FCM web push) goes to the travelers' phones: eTravel reminder (first 10:00 Israel time inside the 72h before landing), packing the day before, morning messages, flight day airport-by time, flight changes.
+- Push (FCM web push) goes to the travelers' phones: eTravel reminder (first whole hour in Israel once the 72h before landing opens, kept within 09:00-21:00), packing the day before, morning messages (on a day they wake up mid-flight: connection time and landing instead), flight day airport-by time, flight changes.
 - Telegram goes to **Jacob only**: flight changes, landed, check-in opening, failures. Format: bold title, then one "label: value" per line, route (from ← to) on every message, one message per leg. Every line gets a U+200F mark (done in `telegram.mjs`). Never print the bot URL (it has the token).
 - AeroDataBox free plan: 400 requests/month. Polling: daily until 4 days out for the first flight, every 12h from 4 days, 3h on the last day, 20 min around departure and landing. Any change must keep the worst case under the quota; simulate it.
 - Airline check-in windows live in **two places that must match**: `CHECKIN` in `js/views.js` and `CHECKIN` + `CHECKIN_HOURS` in `notifier/schedule.mjs` (Etihad 30h, others 24h). `airportBy` (3h international, 2h domestic) is also in both `js/trip.js` and `schedule.mjs`.
