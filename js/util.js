@@ -82,8 +82,14 @@ window.App = window.App || {};
   };
   const ICON_RE = new RegExp(`(${Object.keys(ICONS).map((k) => k.replace('\uFE0F', '')).join('|')})\uFE0F?`, 'gu');
   const icon = (name) => `<img class="ic" src="icons/ui/${name}.png" alt="" aria-hidden="true">`;
-  const iconize = (html) => html.split(/(<[^>]*>)/).map((part, i) => i % 2 ? part
-    : part.replace(ICON_RE, (m, e) => icon(ICONS[e] || ICONS[e + '\uFE0F']))).join('');
+  // Text inside <svg> is skipped: an <img> there breaks the SVG (the map draws its own icons).
+  const iconize = (html) => {
+    let inSvg = 0;
+    return html.split(/(<[^>]*>)/).map((part, i) => {
+      if (i % 2) { if (/^<svg[\s>]/i.test(part)) inSvg++; else if (/^<\/svg>/i.test(part)) inSvg--; return part; }
+      return inSvg ? part : part.replace(ICON_RE, (m, e) => icon(ICONS[e] || ICONS[e + '\uFE0F']));
+    }).join('');
+  };
 
   const store = {
     get(key, fallback) { try { const v = localStorage.getItem(key); return v ? JSON.parse(v) : fallback; } catch (e) { return fallback; } },

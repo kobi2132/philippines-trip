@@ -24,8 +24,10 @@
       const [x1, y1] = proj(P[a]), [x2, y2] = proj(P[b]);
       // gentle curve so overlapping legs (Cebu <-> Bohol) stay readable
       const mx = (x1 + x2) / 2 + (y2 - y1) * 0.15, my = (y1 + y2) / 2 - (x2 - x1) * 0.15;
+      // the icon sits on the curve itself (its midpoint), not on the control point
+      const ix = (x1 + 2 * mx + x2) / 4, iy = (y1 + 2 * my + y2) / 4;
       return `<path d="M${x1},${y1} Q${mx},${my} ${x2},${y2}" fill="none" stroke="#475569" ${STYLE[mode]} stroke-linecap="round"/>
-        <text x="${mx}" y="${my}" font-size="16" text-anchor="middle" dominant-baseline="middle">${ICON[mode]}</text>`;
+        <image href="icons/ui/${App.ICONS[ICON[mode]]}.png" x="${ix - 12}" y="${iy - 12}" width="24" height="24"/>`;
     }).join('');
     const land = `<path d="${LAND.map((pts) => 'M' + pts.map(([lon, lat]) => proj({ lon, lat }).map((v) => v.toFixed(1)).join(',')).join('L') + 'Z').join('')}" fill="#fde9c4" stroke="#e9c98f" stroke-width="1.2" stroke-linejoin="round"/>`;
     const seen = new Set();
