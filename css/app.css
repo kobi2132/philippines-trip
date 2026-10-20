@@ -2,7 +2,7 @@
   --bg: #fffbf5;
   --card: #ffffff;
   --text: #1e293b;
-  --muted: #64748b;
+  --muted: #475569;
   --line: #e7e1d8;
   --blue: #2563eb;
   --teal: #0e7490;
@@ -76,7 +76,7 @@ small { font-size: .85rem; }
 .day-nav .arrow.off { opacity: .25; pointer-events: none; }
 .today-btn {
   flex: 1; height: 46px; border-radius: 14px; background: var(--teal); color: #fff; text-decoration: none;
-  display: grid; place-items: center; font-weight: 700; font-size: 1rem;
+  display: flex; align-items: center; justify-content: center; gap: 6px; font-weight: 700; font-size: 1rem;
 }
 .today-btn.is-today { background: #ccfbf1; color: var(--teal); }
 .other-day, .preview-banner, .msg-banner {
@@ -121,6 +121,7 @@ small { font-size: .85rem; }
 .airline { color: var(--muted); font-size: .9rem; }
 .leg-route { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 8px; margin: 10px 0; text-align: center; }
 .time { font-size: 1.7rem; font-weight: 800; line-height: 1.1; }
+.time-ico { font-size: 1.1rem; margin-inline-end: 4px; vertical-align: middle; }
 .time sup { font-size: .8rem; color: var(--orange); }
 .ap-code { font-weight: 700; color: var(--teal); letter-spacing: .05em; }
 .ap-name { font-size: .92rem; }
@@ -196,13 +197,13 @@ small { font-size: .85rem; }
 .list-add .btn { margin: 0; width: 52px; background: #dcfce7; }
 
 /* hero / before trip */
-.hero { text-align: center; padding: 28px 12px 8px; }
-.hero-emoji { font-size: 2.8rem; }
-.hero h1 { font-size: 1.7rem; font-weight: 800; margin-top: 8px; }
-.hero > p { font-size: 1.05rem; margin: 6px 0; }
+.hero { text-align: center; padding: 10px 12px 4px; }
+.hero-emoji { font-size: 2rem; line-height: 1.2; }
+.hero h1 { font-size: 1.7rem; font-weight: 800; margin-top: 2px; }
+.hero > p { font-size: 1.05rem; margin: 4px 0; }
 /* Countdown keeps its original (19px-base) size on purpose: Jacob likes it big. */
-.countdown { display: inline-flex; flex-direction: column; align-items: center; justify-content: center; aspect-ratio: 1; min-width: 11.5rem; background: linear-gradient(135deg, #0e7490, #22c55e); color: #fff; border-radius: 28px; padding: 16px; margin: 10px 0; box-shadow: var(--shadow); }
-.countdown b { font-size: 5rem; line-height: 1; font-weight: 800; }
+.countdown { display: inline-flex; align-items: baseline; justify-content: center; gap: 10px; min-width: 11.5rem; background: linear-gradient(135deg, #0e7490, #22c55e); color: #fff; border-radius: 24px; padding: 8px 28px; margin: 6px 0; box-shadow: var(--shadow); }
+.countdown b { font-size: 4.2rem; line-height: 1; font-weight: 800; }
 .countdown span { font-size: 1.55rem; }
 .hero-card { text-align: center; background: linear-gradient(135deg, #ecfeff, #fef3c7); }
 .hero-card h2 { font-size: 1.5rem; }
@@ -283,7 +284,7 @@ small { font-size: .85rem; }
 .fold > summary { list-style: none; cursor: pointer; padding: 12px 14px; position: relative; }
 .fold > summary::-webkit-details-marker { display: none; }
 .fold > summary .card-title { margin-bottom: 4px; padding-left: 34px; }
-.fold-line { display: flex; flex-wrap: wrap; gap: 4px 14px; color: var(--muted); font-size: .92rem; }
+.fold-line { display: flex; flex-wrap: wrap; gap: 4px 10px; color: var(--muted); font-size: .92rem; }
 .fold-line b { color: var(--text); }
 .fold-line sup { color: var(--orange); font-size: .7rem; }
 .fold-alert { margin-top: 6px; color: #9a3412; background: var(--warn-bg); border-radius: 10px; padding: 4px 10px; font-weight: 600; font-size: .9rem; }
@@ -387,3 +388,27 @@ body.scroll-down .fx-fab { transform: translateY(90px); opacity: 0; pointer-even
 .p-note { font-size: 9pt; margin: 4px 0 0; }
 .p-foot { margin-top: 14px; font-size: 8pt; color: #6b7280; text-align: center; }
 .p-nowrap { white-space: nowrap; }
+
+/* flights page: landed flights folded into one row */
+.past-group { margin-top: 12px; border: 1px dashed #cbd5e1; border-radius: var(--radius); padding: 0 14px; }
+.past-group > summary { position: relative; padding-left: 44px; list-style: none; display: flex; align-items: center; justify-content: space-between; min-height: 52px; font-weight: 600; color: var(--muted); cursor: pointer; }
+.past-group > summary::-webkit-details-marker { display: none; }
+.past-group > summary .fold-btn { top: 10px; left: 0; }
+.past-group[open] > summary .fold-btn::before { transform: translateY(2px) rotate(-135deg); }
+.past-group[open] { padding-bottom: 12px; }
+
+/* home: short "before" list */
+.btn-more { background: #ecfeff; color: #155e75; margin-top: 10px; }
+.list-all-done { font-weight: 700; color: var(--green); text-align: center; margin: 8px 0 0; }
+
+/* info: emergency */
+.btn-sos { background: var(--red); color: #fff; font-size: 1.05rem; font-weight: 700; min-height: 48px; }
+.sub-h { margin: 12px 2px 0; font-size: 1rem; }
+
+/* our own icons (icons/ui), sized to the text around them */
+.ic { width: 1.3em; height: 1.3em; vertical-align: -0.3em; display: inline-block; }
+.ico .ic { width: 30px; height: 30px; vertical-align: 0; }
+.tabbar .tab-ico .ic { width: 28px; height: 28px; vertical-align: 0; }
+.hero-emoji .ic { width: 2.6rem; height: 2.6rem; margin: 0 2px; }
+.fx-fab .ic { width: 30px; height: 30px; vertical-align: 0; }
+.btn-sos .ic { filter: brightness(0) invert(1); }

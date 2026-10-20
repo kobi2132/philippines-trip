@@ -9,13 +9,13 @@
   const estimatedMark = (on) => on ? '<span class="est" title="שעה משוערת, תתעדכן">משוער</span>' : '';
 
   const STATUS = {
-    scheduled: { label: 'בזמן', cls: 'ok', icon: '✅' },
-    ontime: { label: 'בזמן', cls: 'ok', icon: '✅' },
-    delayed: { label: 'עיכוב', cls: 'warn', icon: '⏰' },
+    scheduled: { label: 'בזמן', cls: 'ok', icon: '🟢' },
+    ontime: { label: 'בזמן', cls: 'ok', icon: '🟢' },
+    delayed: { label: 'עיכוב', cls: 'warn', icon: '🟠' },
     boarding: { label: 'עלייה למטוס', cls: 'ok', icon: '🚶' },
     departed: { label: 'המריאה', cls: 'ok', icon: '🛫' },
     landed: { label: 'נחתה', cls: 'ok', icon: '🛬' },
-    cancelled: { label: 'בוטלה', cls: 'bad', icon: '❌' },
+    cancelled: { label: 'בוטלה', cls: 'bad', icon: '🔴' },
   };
 
   const minutesAgo = (iso) => {
@@ -67,12 +67,12 @@
       <div class="leg-head"><span class="fno">✈️ ${esc(leg.flightNo)}${leg.flightNoEstimated ? ' ' + estimatedMark(true) : ''}</span><span class="airline">${esc(leg.airline)}</span></div>
       <div class="leg-route">
         <div class="leg-end">
-          <div class="time">${App.localTime(leg.dep)}</div>
+          <div class="time"><span class="time-ico" aria-hidden="true">🛫</span>${App.localTime(leg.dep)}</div>
           ${airportLine(leg.from, '')}
         </div>
         <div class="leg-mid"><span>${App.duration(leg.dep, leg.arr)}</span><div class="dash"></div></div>
         <div class="leg-end">
-          <div class="time">${App.localTime(leg.arr)}${nextDay ? '<sup>+1</sup>' : ''} ${estimatedMark(leg.arrEstimated)}</div>
+          <div class="time"><span class="time-ico" aria-hidden="true">🛬</span>${App.localTime(leg.arr)}${nextDay ? '<sup>+1</sup>' : ''} ${estimatedMark(leg.arrEstimated)}</div>
           ${airportLine(leg.to, '')}
         </div>
       </div>
@@ -96,7 +96,7 @@
   };
   const checkinBtn = (f) => {
     const c = CHECKIN[f.legs[0].flightNo.slice(0, 2)];
-    return c ? `<a class="copy checkin" href="${c[1]}" target="_blank" rel="noopener" aria-label="צ'ק אין באתר ${c[0]}">✅ צ'ק אין</a>` : '';
+    return c ? `<a class="copy checkin" href="${c[1]}" target="_blank" rel="noopener" aria-label="צ'ק אין באתר ${c[0]}">📱 צ'ק אין</a>` : '';
   };
 
   const flightCard = (f, opts = {}) => {
@@ -115,7 +115,7 @@
       ${body}
       ${f.arrivalTransfer ? `<p class="note">🔀 ${esc(f.arrivalTransfer)}</p>` : ''}
       <details class="more"><summary>🧳 כבודה</summary><p>${esc(f.baggage)}</p><p>${esc(f.carryOn)}</p></details>
-      <div class="booking booking-flight"><div class="booking-id"><span>צ'ק אין ומספר הזמנה</span><b class="code">${esc(f.booking)}</b></div><div class="booking-btns">${checkinBtn(f)}${copyBtn(f.booking)}</div></div>
+      <div class="booking booking-flight"><div class="booking-id"><span>🔖 צ'ק אין ומספר הזמנה</span><b class="code">${esc(f.booking)}</b></div><div class="booking-btns">${checkinBtn(f)}${copyBtn(f.booking)}</div></div>
     </section>`;
   };
 
@@ -159,7 +159,7 @@
         <div class="fact"><span>🛎️ צ'ק אין</span><b>${tm.checkInTime}</b></div>
         <div class="fact"><span>🧳 צ'ק אאוט</span><b>${tm.checkOutTime}</b></div>
       </div>
-      <div class="booking"><span>מספר הזמנה</span>${/\d/.test(h.booking) ? `<b class="code">${esc(h.booking)}</b>${copyBtn(h.booking)}` : `<b>${esc(h.booking)}</b>`}</div>
+      <div class="booking"><span>🔖 מספר הזמנה</span>${/\d/.test(h.booking) ? `<b class="code">${esc(h.booking)}</b>${copyBtn(h.booking)}` : `<b>${esc(h.booking)}</b>`}</div>
       <p>🛏️ ${esc(h.room)}</p>
       <button class="btn btn-show" data-show-hotel="${h.id}">🪧 הראה לנהג</button>
       ${App.navButtons(`${h.name}, ${h.address}`)}
@@ -187,13 +187,20 @@
     return fold(group, a.id, false, summary, full, `style="--accent:${App.place(a.place).color}" ${done ? 'data-done-card' : ''}`);
   };
 
+  App.listOpen = App.listOpen || {};
+
   // A checklist card. Travelers tick items; "עריכה" lets them add and delete items too.
-  const checklistCard = (key, ico, icoClass, title) => {
+  const checklistCard = (key, ico, icoClass, title, short = false) => {
     const can = App.canEdit(), editing = can && App.editList === key;
     const list = App.getList(key);
     const done = list.filter((it) => it.done).length;
     // Open items first, ticked ones sink to the bottom (unless editing, where the order stays put).
-    const items = editing ? list : [...list.filter((it) => !it.done), ...list.filter((it) => it.done)];
+    let items = editing ? list : [...list.filter((it) => !it.done), ...list.filter((it) => it.done)];
+    // Short card (home screen): only the first open items, the rest behind a "show all" button.
+    const SHORT = 3;
+    const cut = short && !editing && !App.listOpen[key];
+    const hidden = cut ? items.length - Math.min(SHORT, list.length - done) : 0;
+    if (cut) items = items.filter((it) => !it.done).slice(0, SHORT);
     const rows = items.map((it) => `
       <li><label><input type="checkbox" data-check="${key}" data-id="${esc(it.id)}" ${it.done ? 'checked' : ''} ${can ? '' : 'disabled'}><span>${esc(it.text)}</span></label>
         ${editing ? `<button class="li-del" data-list-del="${key}" data-id="${esc(it.id)}" aria-label="מחיקה">🗑️</button>` : ''}</li>`).join('');
@@ -202,6 +209,9 @@
         ${can ? `<button class="list-edit${editing ? ' on' : ''}" data-list-edit="${key}">${editing ? '✔️ סיום' : '✏️ עריכה'}</button>` : ''}</div>
       ${list.length ? `<div class="list-bar"><i style="width:${Math.round(100 * done / list.length)}%"></i></div>` : ''}
       <ul class="checklist">${rows}</ul>
+      ${cut && !items.length ? '<p class="list-all-done">🎉 הכול בוצע!</p>' : ''}
+      ${cut && hidden ? `<button class="btn btn-wide btn-more" data-list-more="${key}">👇 ${list.length - done > SHORT ? `עוד ${list.length - done - SHORT} משימות · ` : ''}כל הרשימה</button>` : ''}
+      ${short && !editing && App.listOpen[key] ? `<button class="btn btn-wide btn-more" data-list-more="${key}">👆 להציג רק מה שנשאר</button>` : ''}
       ${editing ? `<div class="list-add"><input type="text" id="add-${key}" placeholder="להוסיף פריט..." enterkeyhint="done"><button class="btn" data-list-add="${key}">➕</button></div>` : ''}
     </section>`;
   };
@@ -331,15 +341,15 @@
     const days = App.daysBetween(App.today(), T.start);
     return `
       <header class="hero">
-        <div class="hero-emoji">🌴✈️🏝️</div>
+        <div class="hero-emoji">🌴🛫🧳</div>
         <h1>${esc(T.travelers)}</h1>
         <p>${esc(T.title)} בעוד</p>
         <div class="countdown"><b>${days}</b><span>${days === 1 ? 'יום' : 'ימים'}</span></div>
-        <p class="muted">המראה ב${App.longDate(App.localDate(T.flights[0].legs[0].dep))}, ${App.localTime(T.flights[0].legs[0].dep)}${App.localDate(T.flights[0].legs[0].dep) > T.start ? `<br>(בלילה שבין ${App.weekday(T.start)} ל${App.weekday(App.localDate(T.flights[0].legs[0].dep))})` : ''}</p>
+        <p class="muted">🛫 המראה ב${App.longDate(App.localDate(T.flights[0].legs[0].dep))}, ${App.localTime(T.flights[0].legs[0].dep)}${App.localDate(T.flights[0].legs[0].dep) > T.start ? `<br>(בלילה שבין ${App.weekday(T.start)} ל${App.weekday(App.localDate(T.flights[0].legs[0].dep))})` : ''}</p>
       </header>
       <a class="btn btn-wide" href="#/day/${T.start}">👀 להציץ ביום הראשון</a>
-      ${checklistCard('before', '📝', 'ico-blue', 'מה עוד צריך לעשות לפני הטיול')}
-      ${days <= 7 ? checklistCard('packing', '🧳', 'ico-orange', 'רשימת אריזה') : ''}`;
+      ${checklistCard('before', '📝', 'ico-blue', 'מה עוד צריך לעשות לפני הטיול', true)}
+      ${days <= 7 ? checklistCard('packing', '🧳', 'ico-orange', 'רשימת אריזה', true) : ''}`;
   };
 
   const todayView = () => {
@@ -370,8 +380,8 @@
     const route = `${esc(f.legs[0].from.city || f.legs[0].from.name)} ← ${esc(f.legs[f.legs.length - 1].to.city || f.legs[f.legs.length - 1].to.name)}`;
     // Taking off after midnight: "tomorrow night", so it isn't read as tomorrow morning.
     const what = App.localDate(f.legs[0].dep) > f.date ? `מחר בלילה טסים (${route}, ההמראה <b>${App.localTime(f.legs[0].dep)}</b>)` : `מחר טיסה (${route})`;
-    return `<div class="guide guide-checkin"><span>✅ ${what}. צ'ק אין אונליין ${when}</span>
-      ${c ? `<a class="copy checkin" href="${c[1]}" target="_blank" rel="noopener">צ'ק אין</a>` : ''}</div>`;
+    return `<div class="guide guide-checkin"><span>📱 ${what}. צ'ק אין אונליין ${when}</span>
+      ${c ? `<a class="copy checkin" href="${c[1]}" target="_blank" rel="noopener">📱 צ'ק אין</a>` : ''}</div>`;
   };
 
   const transferFold = (t) => {
@@ -415,8 +425,8 @@
     const [tag, route] = splitTitle(f.title);
     return `<div class="card-title"><span class="ico ico-blue">✈️</span><h3>${tag ? `<span class="title-tag">${esc(tag)}</span>` : ''}${esc(route)}</h3></div>
       <div class="fold-line"><span>📅 ${App.weekday(App.localDate(first.dep))} <bdi>${App.shortDate(App.localDate(first.dep))}</bdi></span>
-        <span>המראה <b>${App.localTime(first.dep)}</b></span>
-        <span>נחיתה <b>${App.localTime(last.arr)}</b>${nextDay ? '<sup>+1</sup>' : ''}</span></div>
+        <span>🛫 המראה <b>${App.localTime(first.dep)}</b></span>
+        <span>🛬 נחיתה <b>${App.localTime(last.arr)}</b>${nextDay ? '<sup>+1</sup>' : ''}</span></div>
       <div class="fold-sub"><bdi>${f.legs.map((l) => esc(l.flightNo)).join(' · ')}</bdi></div>
 `;
   };
@@ -430,15 +440,24 @@
 
   const flightsView = () => {
     const next = App.nextFlight();
-    return `<h1 class="page-h">✈️ טיסות</h1>
-      ${App.trip.flights.map((f) => {
-        const isNext = next && next.id === f.id;
-        return `
-        <div class="list-date ${isNext ? 'is-next' : ''} ${App.localDate(f.legs[f.legs.length - 1].arr) < App.today() ? 'is-past' : ''}">
+    const all = App.trip.flights;
+    // Flights already landed fold into one row; the next one (or one still in the air) leads, open.
+    const cut = next ? all.indexOf(next) : 0;
+    const past = all.slice(0, cut);
+    const item = (f) => {
+      const isNext = next && next.id === f.id;
+      return `
+        <div class="list-date ${isNext ? 'is-next' : ''}">
           ${isNext ? '<span class="tag">הטיסה הבאה</span>' : ''}
-          ${flightLive(f)}${fold('flights', f.id, false, flightSummary(f), flightCard(f, { showAirportBy: true }))}
+          ${flightLive(f)}${fold('flights', f.id, isNext, flightSummary(f), flightCard(f, { showAirportBy: true }))}
         </div>`;
-      }).join('')}`;
+    };
+    return `<h1 class="page-h">✈️ טיסות</h1>
+      ${past.length ? `<details class="past-group">
+        <summary>🕘 ${past.length === 1 ? 'טיסה אחת שכבר הייתה' : `${past.length} טיסות שכבר היו`}<span class="fold-btn"></span></summary>
+        <div class="is-past">${past.map(item).join('')}</div>
+      </details>` : ''}
+      ${all.slice(cut).map(item).join('')}`;
   };
 
   const hotelsView = () => {
@@ -499,19 +518,20 @@
       ${wa ? `<a class="btn btn-wide btn-wa" href="${wa}" target="_blank" rel="noopener">💬 וואטסאפ ל${esc(T.contact.name)}</a>` : ''}
       ${App.canInstall() ? `<section class="card"><div class="card-title"><span class="ico ico-teal">📲</span><h3>התקנה במסך הבית</h3></div>${App.installCard(false)}</section>` : ''}
       <section class="card"><div class="card-title"><span class="ico ico-red">🆘</span><h3>חירום</h3></div>
-        <a class="btn" href="tel:${esc(I.emergencyPhone)}">📞 חירום בפיליפינים: ${esc(I.emergencyPhone)}</a>
-        <div class="btn-row btn-row-21">
-          <a class="btn" href="${esc(I.embassyUrl)}" target="_blank" rel="noopener">🇮🇱 שגרירות ישראל במנילה</a>
+        <a class="btn btn-wide btn-sos" href="tel:${esc(I.emergencyPhone)}">📞 חיוג לחירום <bdi>${esc(I.emergencyPhone)}</bdi></a>
+        <h4 class="sub-h">🇮🇱 שגרירות ישראל במנילה</h4>
+        <div class="btn-row">
+          ${I.embassyPhone ? `<a class="btn btn-nav" href="tel:${esc(I.embassyPhone.replace(/[^\d+]/g, ''))}">📞 התקשרות</a>` : `<a class="btn btn-nav" href="${esc(I.embassyUrl)}" target="_blank" rel="noopener">🌐 אתר השגרירות</a>`}
           <a class="btn btn-nav" href="${App.mapsUrl('Embassy of Israel, Manila', 'driving')}" target="_blank" rel="noopener">🚕 ניווט</a>
         </div></section>
       ${I.insurance.company ? `<section class="card"><div class="card-title"><span class="ico ico-blue">🛡️</span><h3>ביטוח</h3></div>
-        <p><b>${esc(I.insurance.company)}</b></p><div class="booking"><span>פוליסה</span><b class="code">${esc(I.insurance.policy)}</b>${copyBtn(I.insurance.policy)}</div>${I.insurance.phone ? `<a class="btn" href="tel:${esc(I.insurance.phone)}">📞 מוקד הביטוח</a>` : ''}</section>` : ''}
+        <p><b>${esc(I.insurance.company)}</b></p><div class="booking"><span>🔖 פוליסה</span><b class="code">${esc(I.insurance.policy)}</b>${copyBtn(I.insurance.policy)}</div>${I.insurance.phone ? `<a class="btn" href="tel:${esc(I.insurance.phone)}">📞 מוקד הביטוח</a>` : ''}</section>` : ''}
       <section class="card"><div class="card-title"><span class="ico ico-purple">🧭</span><h3>שימושי לדעת</h3></div>
         <p>🕐 ${esc(I.timeDiff)}</p><p class="clocks" data-clocks>${App.clocks()}</p>
         <p>🔌 ${esc(I.plug)}</p>
         <p>💵 המטבע: ${esc(I.currency.name)} (להמרה: כפתור 💱)</p></section>
       ${pushLine()}
-      <div class="text-size"><span>גודל טקסט</span><button data-font="-1">א-</button><button data-font="1">א+</button><button class="font-reset" data-font="0">רגיל</button></div>
+      <div class="text-size"><span>🔎 גודל טקסט</span><button data-font="-1">א-</button><button data-font="1">א+</button><button class="font-reset" data-font="0">רגיל</button></div>
       ${App.user ? `<p class="muted center">מחוברים בתור ${esc(App.user.email)} · <a href="#" data-signout>התנתקות</a></p>` : ''}
       ${App.role === 'admin' ? '<a class="btn btn-wide" href="#/admin">⚙️ ניהול נתונים</a>' : ''}`;
   };

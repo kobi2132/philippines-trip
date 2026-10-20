@@ -35,6 +35,7 @@ The repo is **public**: never commit personal trip data (bookings, phone numbers
 | `js/install.js` | Install prompt (Android one tap, iPhone how-to) |
 | `js/map.js` | Route map (real coastlines) |
 | `js/print.js` | Admin "ייצוא ל-PDF" printable summary |
+| `icons/ui/` | Our own icons (96px PNG, soft pastel line style, cut from Jacob's Gemini sheets); listed in `sw.js` |
 | `sw.js` | Offline cache + push display |
 | `notifier/` | Scheduled job: reminders, flight status, Telegram |
 | `firebase/firestore.rules` | Access rules (Jacob pastes them into the Firebase console) |
@@ -71,6 +72,7 @@ The repo is **public**: never commit personal trip data (bookings, phone numbers
 - Number ranges use a plain hyphen (`30-60`), not an en dash; `esc()` converts it.
 - Modals: `.modal-box` defaults to ltr, give each box its own rtl class.
 - Flight, hotel and transfer cards are folding `details` cards; one open per list. Lists start closed; a tag marks the next flight and tonight's hotel (decision in #13). A flight still on its way the day after `date` (connection, landing) shows on that day too.
+- Icons: views keep writing emoji; `App.iconize` (in `js/util.js`, run in `App.render`) swaps every emoji listed in `App.ICONS` for our own image from `icons/ui/`. One emoji = one meaning (✅ only means done). A new icon: add the PNG, its emoji in `ICONS`, and its name in `sw.js`. The admin screen keeps plain emoji (its JSON editor).
 - Navigation buttons open Google Maps (`App.navButtons`). Hotels have WhatsApp/call buttons and "🪧 הראה לנהג".
 - Phases: `before` (countdown home with the "before" list; packing list joins in the last 7 days), `eve` (day before: flight card, packing and before lists), `trip` (today = day page), `after` (summary).
 - Text-size buttons and the push row stay at the bottom of the Info screen (Jacob's choice). The FX button hides on scroll down, on the login screen and on days in Israel.

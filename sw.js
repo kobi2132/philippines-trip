@@ -1,9 +1,17 @@
 // Offline support: app files are cached; bump VERSION to ship an update.
-const VERSION = 'v40';
+const VERSION = 'v44';
 const FILES = [
   './', 'index.html', 'manifest.webmanifest', 'css/app.css',
   'js/config.js', 'js/util.js', 'js/shared.js', 'js/install.js', 'js/fx.js', 'js/trip.js', 'js/map.js', 'js/views.js', 'js/print.js', 'js/backend.js', 'js/main.js',
   'icons/icon-192.png', 'icons/icon-512.png',
+  ...[
+    'today', 'flights', 'hotels', 'attractions', 'route', 'info', 'takeoff', 'landing', 'ferry', 'car', 'taxi', 'bus',
+    'call', 'chat', 'navigate', 'show-driver', 'copy', 'booking', 'checkin', 'done', 'edit', 'bell', 'text-size', 'fx',
+    'date', 'time', 'duration', 'place', 'night', 'reception', 'suitcase', 'checklist', 'sos', 'water', 'must', 'boot',
+    'walk', 'gate', 'ticket', 'lock', 'radar', 'connection', 'warning', 'thumbs-up', 'link', 'bed', 'tip', 'message',
+    'eye', 'add', 'trash', 'back', 'more', 'less', 'install', 'web', 'shield', 'plug', 'money', 'settings',
+    'sun', 'partly', 'cloud', 'fog', 'rain', 'showers', 'storm', 'drop', 'sparkles', 'refresh', 'key', 'offline',
+  ].map((n) => `icons/ui/${n}.png`),
 ];
 
 self.addEventListener('install', (e) => {
