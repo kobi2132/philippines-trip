@@ -349,7 +349,7 @@
       </header>
       <a class="btn btn-wide" href="#/day/${T.start}">👀 להציץ ביום הראשון</a>
       ${checklistCard('before', '📝', 'ico-blue', 'מה עוד צריך לעשות לפני הטיול', true)}
-      ${days <= 7 ? checklistCard('packing', '🧳', 'ico-orange', 'רשימת אריזה') : ''}`;
+      ${days <= 7 ? checklistCard('packing', '🧳', 'ico-orange', 'רשימת אריזה', true) : ''}`;
   };
 
   const todayView = () => {

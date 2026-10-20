@@ -197,13 +197,13 @@ small { font-size: .85rem; }
 .list-add .btn { margin: 0; width: 52px; background: #dcfce7; }
 
 /* hero / before trip */
-.hero { text-align: center; padding: 28px 12px 8px; }
-.hero-emoji { font-size: 2.8rem; }
-.hero h1 { font-size: 1.7rem; font-weight: 800; margin-top: 8px; }
-.hero > p { font-size: 1.05rem; margin: 6px 0; }
+.hero { text-align: center; padding: 10px 12px 4px; }
+.hero-emoji { font-size: 2rem; line-height: 1.2; }
+.hero h1 { font-size: 1.7rem; font-weight: 800; margin-top: 2px; }
+.hero > p { font-size: 1.05rem; margin: 4px 0; }
 /* Countdown keeps its original (19px-base) size on purpose: Jacob likes it big. */
-.countdown { display: inline-flex; flex-direction: column; align-items: center; justify-content: center; aspect-ratio: 1; min-width: 11.5rem; background: linear-gradient(135deg, #0e7490, #22c55e); color: #fff; border-radius: 28px; padding: 16px; margin: 10px 0; box-shadow: var(--shadow); }
-.countdown b { font-size: 5rem; line-height: 1; font-weight: 800; }
+.countdown { display: inline-flex; align-items: baseline; justify-content: center; gap: 10px; min-width: 11.5rem; background: linear-gradient(135deg, #0e7490, #22c55e); color: #fff; border-radius: 24px; padding: 8px 28px; margin: 6px 0; box-shadow: var(--shadow); }
+.countdown b { font-size: 4.2rem; line-height: 1; font-weight: 800; }
 .countdown span { font-size: 1.55rem; }
 .hero-card { text-align: center; background: linear-gradient(135deg, #ecfeff, #fef3c7); }
 .hero-card h2 { font-size: 1.5rem; }
@@ -401,5 +401,5 @@ body.scroll-down .fx-fab { transform: translateY(90px); opacity: 0; pointer-even
 .list-all-done { font-weight: 700; color: var(--green); text-align: center; margin: 8px 0 0; }
 
 /* info: emergency */
-.btn-sos { background: var(--red); color: #fff; font-size: 1.2rem; font-weight: 800; min-height: 60px; }
-.sub-h { margin: 14px 2px 8px; font-size: 1.05rem; }
+.btn-sos { background: var(--red); color: #fff; font-size: 1.05rem; font-weight: 700; min-height: 48px; }
+.sub-h { margin: 12px 2px 0; font-size: 1rem; }
