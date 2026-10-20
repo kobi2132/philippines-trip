@@ -9,13 +9,13 @@
   const estimatedMark = (on) => on ? '<span class="est" title="שעה משוערת, תתעדכן">משוער</span>' : '';
 
   const STATUS = {
-    scheduled: { label: 'בזמן', cls: 'ok', icon: '✅' },
-    ontime: { label: 'בזמן', cls: 'ok', icon: '✅' },
-    delayed: { label: 'עיכוב', cls: 'warn', icon: '⏰' },
+    scheduled: { label: 'בזמן', cls: 'ok', icon: '🟢' },
+    ontime: { label: 'בזמן', cls: 'ok', icon: '🟢' },
+    delayed: { label: 'עיכוב', cls: 'warn', icon: '🟠' },
     boarding: { label: 'עלייה למטוס', cls: 'ok', icon: '🚶' },
     departed: { label: 'המריאה', cls: 'ok', icon: '🛫' },
     landed: { label: 'נחתה', cls: 'ok', icon: '🛬' },
-    cancelled: { label: 'בוטלה', cls: 'bad', icon: '❌' },
+    cancelled: { label: 'בוטלה', cls: 'bad', icon: '🔴' },
   };
 
   const minutesAgo = (iso) => {
@@ -67,12 +67,12 @@
       <div class="leg-head"><span class="fno">✈️ ${esc(leg.flightNo)}${leg.flightNoEstimated ? ' ' + estimatedMark(true) : ''}</span><span class="airline">${esc(leg.airline)}</span></div>
       <div class="leg-route">
         <div class="leg-end">
-          <div class="time">${App.localTime(leg.dep)}</div>
+          <div class="time"><span class="time-ico" aria-hidden="true">🛫</span>${App.localTime(leg.dep)}</div>
           ${airportLine(leg.from, '')}
         </div>
         <div class="leg-mid"><span>${App.duration(leg.dep, leg.arr)}</span><div class="dash"></div></div>
         <div class="leg-end">
-          <div class="time">${App.localTime(leg.arr)}${nextDay ? '<sup>+1</sup>' : ''} ${estimatedMark(leg.arrEstimated)}</div>
+          <div class="time"><span class="time-ico" aria-hidden="true">🛬</span>${App.localTime(leg.arr)}${nextDay ? '<sup>+1</sup>' : ''} ${estimatedMark(leg.arrEstimated)}</div>
           ${airportLine(leg.to, '')}
         </div>
       </div>
@@ -96,7 +96,7 @@
   };
   const checkinBtn = (f) => {
     const c = CHECKIN[f.legs[0].flightNo.slice(0, 2)];
-    return c ? `<a class="copy checkin" href="${c[1]}" target="_blank" rel="noopener" aria-label="צ'ק אין באתר ${c[0]}">✅ צ'ק אין</a>` : '';
+    return c ? `<a class="copy checkin" href="${c[1]}" target="_blank" rel="noopener" aria-label="צ'ק אין באתר ${c[0]}">📱 צ'ק אין</a>` : '';
   };
 
   const flightCard = (f, opts = {}) => {
@@ -115,7 +115,7 @@
       ${body}
       ${f.arrivalTransfer ? `<p class="note">🔀 ${esc(f.arrivalTransfer)}</p>` : ''}
       <details class="more"><summary>🧳 כבודה</summary><p>${esc(f.baggage)}</p><p>${esc(f.carryOn)}</p></details>
-      <div class="booking booking-flight"><div class="booking-id"><span>צ'ק אין ומספר הזמנה</span><b class="code">${esc(f.booking)}</b></div><div class="booking-btns">${checkinBtn(f)}${copyBtn(f.booking)}</div></div>
+      <div class="booking booking-flight"><div class="booking-id"><span>🔖 צ'ק אין ומספר הזמנה</span><b class="code">${esc(f.booking)}</b></div><div class="booking-btns">${checkinBtn(f)}${copyBtn(f.booking)}</div></div>
     </section>`;
   };
 
@@ -159,7 +159,7 @@
         <div class="fact"><span>🛎️ צ'ק אין</span><b>${tm.checkInTime}</b></div>
         <div class="fact"><span>🧳 צ'ק אאוט</span><b>${tm.checkOutTime}</b></div>
       </div>
-      <div class="booking"><span>מספר הזמנה</span>${/\d/.test(h.booking) ? `<b class="code">${esc(h.booking)}</b>${copyBtn(h.booking)}` : `<b>${esc(h.booking)}</b>`}</div>
+      <div class="booking"><span>🔖 מספר הזמנה</span>${/\d/.test(h.booking) ? `<b class="code">${esc(h.booking)}</b>${copyBtn(h.booking)}` : `<b>${esc(h.booking)}</b>`}</div>
       <p>🛏️ ${esc(h.room)}</p>
       <button class="btn btn-show" data-show-hotel="${h.id}">🪧 הראה לנהג</button>
       ${App.navButtons(`${h.name}, ${h.address}`)}
@@ -345,7 +345,7 @@
         <h1>${esc(T.travelers)}</h1>
         <p>${esc(T.title)} בעוד</p>
         <div class="countdown"><b>${days}</b><span>${days === 1 ? 'יום' : 'ימים'}</span></div>
-        <p class="muted">המראה ב${App.longDate(App.localDate(T.flights[0].legs[0].dep))}, ${App.localTime(T.flights[0].legs[0].dep)}${App.localDate(T.flights[0].legs[0].dep) > T.start ? `<br>(בלילה שבין ${App.weekday(T.start)} ל${App.weekday(App.localDate(T.flights[0].legs[0].dep))})` : ''}</p>
+        <p class="muted">🛫 המראה ב${App.longDate(App.localDate(T.flights[0].legs[0].dep))}, ${App.localTime(T.flights[0].legs[0].dep)}${App.localDate(T.flights[0].legs[0].dep) > T.start ? `<br>(בלילה שבין ${App.weekday(T.start)} ל${App.weekday(App.localDate(T.flights[0].legs[0].dep))})` : ''}</p>
       </header>
       <a class="btn btn-wide" href="#/day/${T.start}">👀 להציץ ביום הראשון</a>
       ${checklistCard('before', '📝', 'ico-blue', 'מה עוד צריך לעשות לפני הטיול', true)}
@@ -377,8 +377,8 @@
     const c = CHECKIN[f.legs[0].flightNo.slice(0, 2)];
     const opens = App.shiftIso(f.legs[0].dep, -60 * ((c && c[2]) || 24));
     const when = App.localDate(opens) < App.addDays(f.date, -1) ? 'כבר פתוח' : `נפתח היום ב-<b>${App.localTime(opens)}</b>`;
-    return `<div class="guide guide-checkin"><span>✅ מחר טיסה (${esc(f.legs[0].from.city || f.legs[0].from.name)} ← ${esc(f.legs[f.legs.length - 1].to.city || f.legs[f.legs.length - 1].to.name)}). צ'ק אין אונליין ${when}</span>
-      ${c ? `<a class="copy checkin" href="${c[1]}" target="_blank" rel="noopener">צ'ק אין</a>` : ''}</div>`;
+    return `<div class="guide guide-checkin"><span>📱 מחר טיסה (${esc(f.legs[0].from.city || f.legs[0].from.name)} ← ${esc(f.legs[f.legs.length - 1].to.city || f.legs[f.legs.length - 1].to.name)}). צ'ק אין אונליין ${when}</span>
+      ${c ? `<a class="copy checkin" href="${c[1]}" target="_blank" rel="noopener">📱 צ'ק אין</a>` : ''}</div>`;
   };
 
   const transferFold = (t) => {
@@ -422,8 +422,8 @@
     const [tag, route] = splitTitle(f.title);
     return `<div class="card-title"><span class="ico ico-blue">✈️</span><h3>${tag ? `<span class="title-tag">${esc(tag)}</span>` : ''}${esc(route)}</h3></div>
       <div class="fold-line"><span>📅 ${App.weekday(App.localDate(first.dep))} <bdi>${App.shortDate(App.localDate(first.dep))}</bdi></span>
-        <span>המראה <b>${App.localTime(first.dep)}</b></span>
-        <span>נחיתה <b>${App.localTime(last.arr)}</b>${nextDay ? '<sup>+1</sup>' : ''}</span></div>
+        <span>🛫 המראה <b>${App.localTime(first.dep)}</b></span>
+        <span>🛬 נחיתה <b>${App.localTime(last.arr)}</b>${nextDay ? '<sup>+1</sup>' : ''}</span></div>
       <div class="fold-sub"><bdi>${f.legs.map((l) => esc(l.flightNo)).join(' · ')}</bdi></div>
 `;
   };
@@ -522,13 +522,13 @@
           <a class="btn btn-nav" href="${App.mapsUrl('Embassy of Israel, Manila', 'driving')}" target="_blank" rel="noopener">🚕 ניווט</a>
         </div></section>
       ${I.insurance.company ? `<section class="card"><div class="card-title"><span class="ico ico-blue">🛡️</span><h3>ביטוח</h3></div>
-        <p><b>${esc(I.insurance.company)}</b></p><div class="booking"><span>פוליסה</span><b class="code">${esc(I.insurance.policy)}</b>${copyBtn(I.insurance.policy)}</div>${I.insurance.phone ? `<a class="btn" href="tel:${esc(I.insurance.phone)}">📞 מוקד הביטוח</a>` : ''}</section>` : ''}
+        <p><b>${esc(I.insurance.company)}</b></p><div class="booking"><span>🔖 פוליסה</span><b class="code">${esc(I.insurance.policy)}</b>${copyBtn(I.insurance.policy)}</div>${I.insurance.phone ? `<a class="btn" href="tel:${esc(I.insurance.phone)}">📞 מוקד הביטוח</a>` : ''}</section>` : ''}
       <section class="card"><div class="card-title"><span class="ico ico-purple">🧭</span><h3>שימושי לדעת</h3></div>
         <p>🕐 ${esc(I.timeDiff)}</p><p class="clocks" data-clocks>${App.clocks()}</p>
         <p>🔌 ${esc(I.plug)}</p>
         <p>💵 המטבע: ${esc(I.currency.name)} (להמרה: כפתור 💱)</p></section>
       ${pushLine()}
-      <div class="text-size"><span>גודל טקסט</span><button data-font="-1">א-</button><button data-font="1">א+</button><button class="font-reset" data-font="0">רגיל</button></div>
+      <div class="text-size"><span>🔎 גודל טקסט</span><button data-font="-1">א-</button><button data-font="1">א+</button><button class="font-reset" data-font="0">רגיל</button></div>
       ${App.user ? `<p class="muted center">מחוברים בתור ${esc(App.user.email)} · <a href="#" data-signout>התנתקות</a></p>` : ''}
       ${App.role === 'admin' ? '<a class="btn btn-wide" href="#/admin">⚙️ ניהול נתונים</a>' : ''}`;
   };
