@@ -76,7 +76,7 @@ small { font-size: .85rem; }
 .day-nav .arrow.off { opacity: .25; pointer-events: none; }
 .today-btn {
   flex: 1; height: 46px; border-radius: 14px; background: var(--teal); color: #fff; text-decoration: none;
-  display: grid; place-items: center; font-weight: 700; font-size: 1rem;
+  display: flex; align-items: center; justify-content: center; gap: 6px; font-weight: 700; font-size: 1rem;
 }
 .today-btn.is-today { background: #ccfbf1; color: var(--teal); }
 .other-day, .preview-banner, .msg-banner {
@@ -403,3 +403,11 @@ body.scroll-down .fx-fab { transform: translateY(90px); opacity: 0; pointer-even
 /* info: emergency */
 .btn-sos { background: var(--red); color: #fff; font-size: 1.05rem; font-weight: 700; min-height: 48px; }
 .sub-h { margin: 12px 2px 0; font-size: 1rem; }
+
+/* our own icons (icons/ui), sized to the text around them */
+.ic { width: 1.3em; height: 1.3em; vertical-align: -0.3em; display: inline-block; }
+.ico .ic { width: 30px; height: 30px; vertical-align: 0; }
+.tabbar .tab-ico .ic { width: 28px; height: 28px; vertical-align: 0; }
+.hero-emoji .ic { width: 2.6rem; height: 2.6rem; margin: 0 2px; }
+.fx-fab .ic { width: 30px; height: 30px; vertical-align: 0; }
+.btn-sos .ic { filter: brightness(0) invert(1); }

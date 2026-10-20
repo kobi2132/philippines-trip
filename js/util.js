@@ -64,6 +64,21 @@ window.App = window.App || {};
       <a class="btn btn-nav" href="${mapsUrl(query, 'walking')}" target="_blank" rel="noopener">🚶 ניווט ברגל</a>
     </div>` : '';
 
+  // Our own icons replace the phone's emoji in everything the app renders. Only text between
+  // tags is touched, so attributes stay as written. One emoji = one meaning across the app.
+  const ICONS = {
+    '🏠': 'today', '✈️': 'flights', '🏨': 'hotels', '🌴': 'attractions', '🏝️': 'attractions', '🗺️': 'route', 'ℹ️': 'info',
+    '🛫': 'takeoff', '🛬': 'landing', '⛴️': 'ferry', '🚕': 'taxi', '🚌': 'bus', '🚶': 'walk',
+    '📞': 'call', '💬': 'chat', '🧭': 'navigate', '🪧': 'show-driver', '📋': 'copy', '🔖': 'booking', '📱': 'checkin',
+    '✅': 'done', '✏️': 'edit', '🔔': 'bell', '🔎': 'text-size', '💱': 'fx',
+    '📅': 'date', '🕐': 'time', '⏱️': 'duration', '📍': 'place', '🌙': 'night', '🛎️': 'reception', '🧳': 'suitcase',
+    '📝': 'checklist', '🆘': 'sos', '🏊': 'water', '⭐': 'must', '💪': 'boot',
+  };
+  const ICON_RE = new RegExp(`(${Object.keys(ICONS).map((k) => k.replace('\uFE0F', '')).join('|')})\uFE0F?`, 'gu');
+  const icon = (name) => `<img class="ic" src="icons/ui/${name}.png" alt="" aria-hidden="true">`;
+  const iconize = (html) => html.split(/(<[^>]*>)/).map((part, i) => i % 2 ? part
+    : part.replace(ICON_RE, (m, e) => icon(ICONS[e] || ICONS[e + '\uFE0F']))).join('');
+
   const store = {
     get(key, fallback) { try { const v = localStorage.getItem(key); return v ? JSON.parse(v) : fallback; } catch (e) { return fallback; } },
     set(key, val) { try { localStorage.setItem(key, JSON.stringify(val)); } catch (e) { /* ignore */ } },
@@ -71,6 +86,6 @@ window.App = window.App || {};
 
   Object.assign(App, {
     esc, parseDate, fmtDate, addDays, daysBetween, weekday, shortDate, range, longDate,
-    localTime, localDate, shiftIso, minusMinutes, duration, now, today, isPreview, mapsUrl, navButtons, store,
+    localTime, localDate, shiftIso, minusMinutes, duration, now, today, isPreview, mapsUrl, navButtons, store, icon, iconize, ICONS,
   });
 })(window.App);

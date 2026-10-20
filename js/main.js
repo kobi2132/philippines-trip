@@ -21,12 +21,14 @@
     else if (name === 'attractions') html = App.views.attractions(arg);
     else if (name === 'admin' && App.role === 'admin') html = adminView();
     else html = (App.views[name] || App.views.today)();
-    main().innerHTML = App.previewBanner() + App.viewerBanner() + (name === 'today' ? App.noteBanner() : '') + html;
+    const page = App.previewBanner() + App.viewerBanner() + (name === 'today' ? App.noteBanner() : '') + html;
+    // The admin screen holds raw trip data (its JSON editor too), so it keeps plain emoji.
+    main().innerHTML = name === 'admin' ? page : App.iconize(page);
     const active = name === 'day' ? 'today' : name;
     tabbar().hidden = false;
-    tabbar().innerHTML = TABS.map(([k, ico, label]) =>
-      `<a href="#/${k}" class="${k === active ? 'on' : ''}"><span class="tab-ico">${ico}</span><span>${label}</span></a>`).join('');
-    if (!document.querySelector('.fx-fab')) { document.body.insertAdjacentHTML('beforeend', App.fxButton()); App.refreshFxRate(); }
+    tabbar().innerHTML = App.iconize(TABS.map(([k, ico, label]) =>
+      `<a href="#/${k}" class="${k === active ? 'on' : ''}"><span class="tab-ico">${ico}</span><span>${label}</span></a>`).join(''));
+    if (!document.querySelector('.fx-fab')) { document.body.insertAdjacentHTML('beforeend', App.iconize(App.fxButton())); App.refreshFxRate(); }
     fillWeather();
     onScroll();
   };
