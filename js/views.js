@@ -151,7 +151,7 @@
       ${banner}
       <p class="muted">📍 ${esc(h.city)} · ${esc(h.address)}</p>
       ${h.whatsapp || h.phone ? `<div class="btn-row">
-        ${h.whatsapp ? `<a class="btn btn-wa" href="https://wa.me/${esc(h.whatsapp.replace(/\D/g, ''))}" target="_blank" rel="noopener">💬 וואטסאפ למלון</a>` : ''}
+        ${h.whatsapp ? `<a class="btn btn-wa" href="https://wa.me/${esc(h.whatsapp.replace(/\D/g, ''))}" target="_blank" rel="noopener">${App.icon('whatsapp')} וואטסאפ למלון</a>` : ''}
         ${h.phone ? `<a class="btn" href="tel:${esc(h.phone.replace(/[^\d+]/g, ''))}">📞 התקשרות</a>` : ''}
       </div>` : ''}
       <div class="facts">
@@ -540,7 +540,7 @@
         <p>🕐 ${esc(I.timeDiff)}</p><p class="clocks" data-clocks>${App.clocks()}</p>
         <p>🔌 ${esc(I.plug)}</p>
         <p>💵 המטבע: ${esc(I.currency.name)} (להמרה: כפתור 💱)</p></section>
-      ${wa ? `<a class="btn btn-wide btn-wa" href="${wa}" target="_blank" rel="noopener">💬 וואטסאפ ל${esc(T.contact.name)}</a>` : ''}
+      ${wa ? `<a class="btn btn-wide btn-wa" href="${wa}" target="_blank" rel="noopener">${App.icon('whatsapp')} וואטסאפ ל${esc(T.contact.name)}</a>` : ''}
       ${pushLine()}
       <div class="text-size"><span>🔎 גודל טקסט</span><button data-font="-1">א-</button><button data-font="1">א+</button><button class="font-reset" data-font="0">רגיל</button></div>
       ${App.user ? `<p class="muted center">מחוברים בתור ${esc(App.user.email)} · <a href="#" data-signout>התנתקות</a></p>` : ''}
