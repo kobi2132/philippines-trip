@@ -2,7 +2,7 @@
   --bg: #fffbf5;
   --card: #ffffff;
   --text: #1e293b;
-  --muted: #64748b;
+  --muted: #475569;
   --line: #e7e1d8;
   --blue: #2563eb;
   --teal: #0e7490;
@@ -386,3 +386,19 @@ body.scroll-down .fx-fab { transform: translateY(90px); opacity: 0; pointer-even
 .p-note { font-size: 9pt; margin: 4px 0 0; }
 .p-foot { margin-top: 14px; font-size: 8pt; color: #6b7280; text-align: center; }
 .p-nowrap { white-space: nowrap; }
+
+/* flights page: landed flights folded into one row */
+.past-group { margin-top: 12px; border: 1px dashed #cbd5e1; border-radius: var(--radius); padding: 0 14px; }
+.past-group > summary { position: relative; padding-left: 44px; list-style: none; display: flex; align-items: center; justify-content: space-between; min-height: 52px; font-weight: 600; color: var(--muted); cursor: pointer; }
+.past-group > summary::-webkit-details-marker { display: none; }
+.past-group > summary .fold-btn { top: 10px; left: 0; }
+.past-group[open] > summary .fold-btn::before { transform: translateY(2px) rotate(-135deg); }
+.past-group[open] { padding-bottom: 12px; }
+
+/* home: short "before" list */
+.btn-more { background: #ecfeff; color: #155e75; margin-top: 10px; }
+.list-all-done { font-weight: 700; color: var(--green); text-align: center; margin: 8px 0 0; }
+
+/* info: emergency */
+.btn-sos { background: var(--red); color: #fff; font-size: 1.2rem; font-weight: 800; min-height: 60px; }
+.sub-h { margin: 14px 2px 8px; font-size: 1.05rem; }

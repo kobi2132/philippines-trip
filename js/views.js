@@ -187,13 +187,20 @@
     return fold(group, a.id, false, summary, full, `style="--accent:${App.place(a.place).color}" ${done ? 'data-done-card' : ''}`);
   };
 
+  App.listOpen = App.listOpen || {};
+
   // A checklist card. Travelers tick items; "עריכה" lets them add and delete items too.
-  const checklistCard = (key, ico, icoClass, title) => {
+  const checklistCard = (key, ico, icoClass, title, short = false) => {
     const can = App.canEdit(), editing = can && App.editList === key;
     const list = App.getList(key);
     const done = list.filter((it) => it.done).length;
     // Open items first, ticked ones sink to the bottom (unless editing, where the order stays put).
-    const items = editing ? list : [...list.filter((it) => !it.done), ...list.filter((it) => it.done)];
+    let items = editing ? list : [...list.filter((it) => !it.done), ...list.filter((it) => it.done)];
+    // Short card (home screen): only the first open items, the rest behind a "show all" button.
+    const SHORT = 3;
+    const cut = short && !editing && !App.listOpen[key];
+    const hidden = cut ? items.length - Math.min(SHORT, list.length - done) : 0;
+    if (cut) items = items.filter((it) => !it.done).slice(0, SHORT);
     const rows = items.map((it) => `
       <li><label><input type="checkbox" data-check="${key}" data-id="${esc(it.id)}" ${it.done ? 'checked' : ''} ${can ? '' : 'disabled'}><span>${esc(it.text)}</span></label>
         ${editing ? `<button class="li-del" data-list-del="${key}" data-id="${esc(it.id)}" aria-label="מחיקה">🗑️</button>` : ''}</li>`).join('');
@@ -202,6 +209,9 @@
         ${can ? `<button class="list-edit${editing ? ' on' : ''}" data-list-edit="${key}">${editing ? '✔️ סיום' : '✏️ עריכה'}</button>` : ''}</div>
       ${list.length ? `<div class="list-bar"><i style="width:${Math.round(100 * done / list.length)}%"></i></div>` : ''}
       <ul class="checklist">${rows}</ul>
+      ${cut && !items.length ? '<p class="list-all-done">🎉 הכול בוצע!</p>' : ''}
+      ${cut && hidden ? `<button class="btn btn-wide btn-more" data-list-more="${key}">👇 ${list.length - done > SHORT ? `עוד ${list.length - done - SHORT} משימות · ` : ''}כל הרשימה</button>` : ''}
+      ${short && !editing && App.listOpen[key] ? `<button class="btn btn-wide btn-more" data-list-more="${key}">👆 להציג רק מה שנשאר</button>` : ''}
       ${editing ? `<div class="list-add"><input type="text" id="add-${key}" placeholder="להוסיף פריט..." enterkeyhint="done"><button class="btn" data-list-add="${key}">➕</button></div>` : ''}
     </section>`;
   };
@@ -338,7 +348,7 @@
         <p class="muted">המראה ב${App.longDate(App.localDate(T.flights[0].legs[0].dep))}, ${App.localTime(T.flights[0].legs[0].dep)}${App.localDate(T.flights[0].legs[0].dep) > T.start ? `<br>(בלילה שבין ${App.weekday(T.start)} ל${App.weekday(App.localDate(T.flights[0].legs[0].dep))})` : ''}</p>
       </header>
       <a class="btn btn-wide" href="#/day/${T.start}">👀 להציץ ביום הראשון</a>
-      ${checklistCard('before', '📝', 'ico-blue', 'מה עוד צריך לעשות לפני הטיול')}
+      ${checklistCard('before', '📝', 'ico-blue', 'מה עוד צריך לעשות לפני הטיול', true)}
       ${days <= 7 ? checklistCard('packing', '🧳', 'ico-orange', 'רשימת אריזה') : ''}`;
   };
 
@@ -427,15 +437,24 @@
 
   const flightsView = () => {
     const next = App.nextFlight();
-    return `<h1 class="page-h">✈️ טיסות</h1>
-      ${App.trip.flights.map((f) => {
-        const isNext = next && next.id === f.id;
-        return `
-        <div class="list-date ${isNext ? 'is-next' : ''} ${App.localDate(f.legs[f.legs.length - 1].arr) < App.today() ? 'is-past' : ''}">
+    const all = App.trip.flights;
+    // Flights already landed fold into one row; the next one (or one still in the air) leads, open.
+    const cut = next ? all.indexOf(next) : 0;
+    const past = all.slice(0, cut);
+    const item = (f) => {
+      const isNext = next && next.id === f.id;
+      return `
+        <div class="list-date ${isNext ? 'is-next' : ''}">
           ${isNext ? '<span class="tag">הטיסה הבאה</span>' : ''}
-          ${flightLive(f)}${fold('flights', f.id, false, flightSummary(f), flightCard(f, { showAirportBy: true }))}
+          ${flightLive(f)}${fold('flights', f.id, isNext, flightSummary(f), flightCard(f, { showAirportBy: true }))}
         </div>`;
-      }).join('')}`;
+    };
+    return `<h1 class="page-h">✈️ טיסות</h1>
+      ${past.length ? `<details class="past-group">
+        <summary>🕘 ${past.length === 1 ? 'טיסה אחת שכבר הייתה' : `${past.length} טיסות שכבר היו`}<span class="fold-btn"></span></summary>
+        <div class="is-past">${past.map(item).join('')}</div>
+      </details>` : ''}
+      ${all.slice(cut).map(item).join('')}`;
   };
 
   const hotelsView = () => {
@@ -496,9 +515,10 @@
       ${wa ? `<a class="btn btn-wide btn-wa" href="${wa}" target="_blank" rel="noopener">💬 וואטסאפ ל${esc(T.contact.name)}</a>` : ''}
       ${App.canInstall() ? `<section class="card"><div class="card-title"><span class="ico ico-teal">📲</span><h3>התקנה במסך הבית</h3></div>${App.installCard(false)}</section>` : ''}
       <section class="card"><div class="card-title"><span class="ico ico-red">🆘</span><h3>חירום</h3></div>
-        <a class="btn" href="tel:${esc(I.emergencyPhone)}">📞 חירום בפיליפינים: ${esc(I.emergencyPhone)}</a>
-        <div class="btn-row btn-row-21">
-          <a class="btn" href="${esc(I.embassyUrl)}" target="_blank" rel="noopener">🇮🇱 שגרירות ישראל במנילה</a>
+        <a class="btn btn-wide btn-sos" href="tel:${esc(I.emergencyPhone)}">📞 חיוג לחירום <bdi>${esc(I.emergencyPhone)}</bdi></a>
+        <h4 class="sub-h">🇮🇱 שגרירות ישראל במנילה</h4>
+        <div class="btn-row">
+          ${I.embassyPhone ? `<a class="btn btn-nav" href="tel:${esc(I.embassyPhone.replace(/[^\d+]/g, ''))}">📞 התקשרות</a>` : `<a class="btn btn-nav" href="${esc(I.embassyUrl)}" target="_blank" rel="noopener">🌐 אתר השגרירות</a>`}
           <a class="btn btn-nav" href="${App.mapsUrl('Embassy of Israel, Manila', 'driving')}" target="_blank" rel="noopener">🚕 ניווט</a>
         </div></section>
       ${I.insurance.company ? `<section class="card"><div class="card-title"><span class="ico ico-blue">🛡️</span><h3>ביטוח</h3></div>
