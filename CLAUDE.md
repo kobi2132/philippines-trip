@@ -61,7 +61,7 @@ The repo is **public**: never commit personal trip data (bookings, phone numbers
 - A flight whose first leg departs after midnight keeps `date` = the evening before; the UI and notifier say "ההמראה אחרי חצות" explicitly.
 - `hotels[]`: `id, place, city, name, address, checkIn, checkOut` (dates; the night of `checkOut` is not included), `room, booking, whatsapp, phone, checkInTime, checkOutTime`.
 - `transfers[]`: `id, date, type (taxi|ferry|bus), title, time, timeLabel, duration, details, grab, toHotel, navTo, links[]`.
-- `attractions[]`: `id, place, name, en, desc, tags{water, difficulty, duration}, mustSee, mapQuery`. **Shown per place, not per day**: every day in a place lists all of that place's attractions, undone first (decision 2026-10-16; parents stay flexible). `day.attractions` is unused.
+- `attractions[]`: `id, place, name, en, desc, tags{water, difficulty, duration}, mustSee, mapQuery`. **Shown per place, not per day**: every day in a place lists all of that place's attractions, undone first (decision 2026-10-16; parents stay flexible). `day.attractions` is unused. The Attractions tab picks the place from a grid of all places with their dates (Jacob, 2026-10-20: no sideways-scrolling strip, it hid places and jumped back on every redraw).
 - `days[]`: one per date from the prep day (`prep: true`) to the end: `date, place, title`, optional `tips[]`.
 
 ## UI rules
