@@ -4,7 +4,9 @@ const HE_PLACE = (trip, key) => (trip.places[key] || {}).name || key;
 
 export const tzOfPlace = (place) => (place === 'israel' || !place ? 'Asia/Jerusalem' : 'Asia/Manila');
 // A flight's departure airport zone, from the offset its time is written in.
-const tzOfDeparture = (f) => (f.legs[0].dep.endsWith('+02:00') ? 'Asia/Jerusalem' : 'Asia/Manila');
+const tzOfDeparture = (f) => tzOfIso(f.legs[0].dep);
+// The zone a time is written in, from its offset (the trip's airports: Israel, Abu Dhabi, the Philippines).
+const tzOfIso = (iso) => ({ '+02:00': 'Asia/Jerusalem', '+04:00': 'Asia/Dubai' })[iso.slice(19)] || 'Asia/Manila';
 
 // Local date and time in a time zone: { date: 'YYYY-MM-DD', hm: 'HH:MM' }
 export function localParts(now, tz) {
@@ -26,6 +28,9 @@ export const airportBy = (f) => fromMin(toMin(localTime(f.legs[0].dep)) - (f.int
 
 const hotelCheckingOut = (trip, date) => trip.hotels.find((h) => h.checkOut === date);
 const flightOn = (trip, date) => trip.flights.find((f) => f.date === date);
+// A flight booked on an earlier day that is still on its way this day (a connection, a landing).
+const flightContinuing = (trip, date) => trip.flights.find((f) => f.date < date
+  && f.legs.some((l) => l.dep.slice(0, 10) === date || l.arr.slice(0, 10) === date));
 
 // Every reminder the trip calls for: { key, date, time, tz, title, body, link }
 export function plannedReminders(trip) {
@@ -33,11 +38,14 @@ export function plannedReminders(trip) {
   const names = trip.travelers;
   const link = (date) => `#/day/${date}`;
 
-  // eTravel opens 72h before landing in the Philippines: the first 10:00 in Israel inside that window.
+  // eTravel opens 72h before landing in the Philippines: the first whole hour in Israel once it opens
+  // (09:00-21:00; before that 10:00 the same day, after it 10:00 the next day).
   const landing = new Date(trip.flights[0].legs[trip.flights[0].legs.length - 1].arr);
-  let etravelDate = localParts(new Date(landing.getTime() - 72 * 3600e3), 'Asia/Jerusalem').date;
-  if (zonedTime(etravelDate, '10:00', 'Asia/Jerusalem') < landing.getTime() - 72 * 3600e3) etravelDate = addDays(etravelDate, 1);
-  out.push({ key: 'etravel', date: etravelDate, time: '10:00', tz: 'Asia/Jerusalem',
+  const opens = localParts(new Date(landing.getTime() - 72 * 3600e3 + 59 * 60e3), 'Asia/Jerusalem');
+  const hour = Number(opens.hm.slice(0, 2));
+  const etravelDate = hour >= 21 ? addDays(opens.date, 1) : opens.date;
+  const etravelTime = hour < 9 || hour >= 21 ? '10:00' : `${opens.hm.slice(0, 2)}:00`;
+  out.push({ key: 'etravel', date: etravelDate, time: etravelTime, tz: 'Asia/Jerusalem',
     title: '📝 זה הזמן למלא eTravel', body: 'זה הזמן למלא את טופס eTravel של הפיליפינים ולבדוק את הרשימה באפליקציה.', link: '#/today' });
   out.push({ key: 'packing', date: addDays(trip.start, -1), time: '10:00', tz: 'Asia/Jerusalem',
     title: '🎒 מחר טסים! הגיע הזמן לארוז', body: `${names}, רשימת האריזה מחכה באפליקציה. מחר להיות בנתב"ג עד ${airportBy(trip.flights[0])}.`, link: '#/today' });
@@ -46,7 +54,18 @@ export function plannedReminders(trip) {
     if (day.date < trip.start || day.date > trip.end) continue;
     const tz = tzOfPlace(day.place);
     const f = flightOn(trip, day.date);
-    if (f) {
+    const cont = !f && flightContinuing(trip, day.date);
+    if (cont) {
+      // Waking up on the way: when the connection leaves and when they land, instead of "good morning".
+      const conn = cont.legs.slice(1).find((l) => l.dep.slice(0, 10) === day.date);
+      const last = cont.legs[cont.legs.length - 1];
+      const lands = last.arr.slice(0, 10) === day.date ? `נוחתים ב${last.to.city} ב-${localTime(last.arr)}.` : '';
+      out.push(conn
+        ? { key: `morning_${day.date}`, date: day.date, time: fromMin(toMin(localTime(conn.dep)) - 120), tz: tzOfIso(conn.dep),
+          title: `✈️ ממשיכים מ${conn.from.city}`, body: `טיסה ${conn.flightNo} ב-${localTime(conn.dep)}. ${lands}`.trim(), link: link(day.date) }
+        : { key: `morning_${day.date}`, date: day.date, time: '08:00', tz: tzOfIso(last.arr),
+          title: '✈️ בדרך', body: lands, link: link(day.date) });
+    } else if (f) {
       // Flight day: early enough to matter, never after 08:00.
       const time = fromMin(Math.min(toMin('08:00'), toMin(airportBy(f)) - 120));
       out.push({ key: `morning_${day.date}`, date: day.date, time, tz: tzOfDeparture(f),
@@ -204,7 +223,7 @@ export function dueTelegram(trip, now, sent = {}) {
 }
 
 // A wall-clock time in a zone as a Date (the trip's zones have no DST in November).
-const OFFSET = { 'Asia/Jerusalem': '+02:00', 'Asia/Manila': '+08:00' };
+const OFFSET = { 'Asia/Jerusalem': '+02:00', 'Asia/Dubai': '+04:00', 'Asia/Manila': '+08:00' };
 const zonedTime = (date, hm, tz) => new Date(`${date}T${hm}:00${OFFSET[tz] || '+00:00'}`);
 
 export const _test = { toMin, fromMin, addDays, shortDate };

@@ -377,7 +377,10 @@
     const c = CHECKIN[f.legs[0].flightNo.slice(0, 2)];
     const opens = App.shiftIso(f.legs[0].dep, -60 * ((c && c[2]) || 24));
     const when = App.localDate(opens) < App.addDays(f.date, -1) ? 'כבר פתוח' : `נפתח היום ב-<b>${App.localTime(opens)}</b>`;
-    return `<div class="guide guide-checkin"><span>📱 מחר טיסה (${esc(f.legs[0].from.city || f.legs[0].from.name)} ← ${esc(f.legs[f.legs.length - 1].to.city || f.legs[f.legs.length - 1].to.name)}). צ'ק אין אונליין ${when}</span>
+    const route = `${esc(f.legs[0].from.city || f.legs[0].from.name)} ← ${esc(f.legs[f.legs.length - 1].to.city || f.legs[f.legs.length - 1].to.name)}`;
+    // Taking off after midnight: "tomorrow night", so it isn't read as tomorrow morning.
+    const what = App.localDate(f.legs[0].dep) > f.date ? `מחר בלילה טסים (${route}, ההמראה <b>${App.localTime(f.legs[0].dep)}</b>)` : `מחר טיסה (${route})`;
+    return `<div class="guide guide-checkin"><span>📱 ${what}. צ'ק אין אונליין ${when}</span>
       ${c ? `<a class="copy checkin" href="${c[1]}" target="_blank" rel="noopener">📱 צ'ק אין</a>` : ''}</div>`;
   };
 

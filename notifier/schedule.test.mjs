@@ -96,3 +96,17 @@ test('evening reminder still comes after a daytime flight that landed', () => {
   const keys = plannedReminders(t2).map((r) => r.key);
   assert.ok(keys.includes('eve_2026-11-09')); // F2 landed at 13:00 on the 8th
 });
+
+test('mid-flight morning: connection and landing instead of good morning', () => {
+  const t3 = { ...trip, start: '2026-11-04', days: [{ date: '2026-11-04', place: 'israel' }, { date: '2026-11-05', place: 'cebu' }, ...trip.days.slice(1)],
+    flights: [{ date: '2026-11-04', international: true, booking: 'EEE', legs: [
+      leg('E1', '2026-11-05T00:50:00+02:00', '2026-11-05T05:50:00+04:00', 'TLV'),
+      { ...leg('E2', '2026-11-05T09:20:00+04:00', '2026-11-05T21:55:00+08:00', 'AUH'), to: { city: 'מנילה' } }] }, ...trip.flights.slice(1)] };
+  const r = plannedReminders(t3).find((x) => x.key === 'morning_2026-11-05');
+  assert.equal(r.tz, 'Asia/Dubai');
+  assert.equal(r.time, '07:20');
+  assert.match(r.body, /E2 ב-09:20\. נוחתים במנילה ב-21:55/);
+  // eTravel: 72h before 21:55 Manila = 2.11 15:55 Israel -> 16:00
+  const e = plannedReminders(t3).find((x) => x.key === 'etravel');
+  assert.deepEqual([e.date, e.time], ['2026-11-02', '16:00']);
+});
