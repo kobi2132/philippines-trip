@@ -21,12 +21,14 @@
     else if (name === 'attractions') html = App.views.attractions(arg);
     else if (name === 'admin' && App.role === 'admin') html = adminView();
     else html = (App.views[name] || App.views.today)();
-    main().innerHTML = App.previewBanner() + App.viewerBanner() + (name === 'today' ? App.noteBanner() : '') + html;
+    const page = App.previewBanner() + App.viewerBanner() + (name === 'today' ? App.noteBanner() : '') + html;
+    // The admin screen holds raw trip data (its JSON editor too), so it keeps plain emoji.
+    main().innerHTML = name === 'admin' ? page : App.iconize(page);
     const active = name === 'day' ? 'today' : name;
     tabbar().hidden = false;
-    tabbar().innerHTML = TABS.map(([k, ico, label]) =>
-      `<a href="#/${k}" class="${k === active ? 'on' : ''}"><span class="tab-ico">${ico}</span><span>${label}</span></a>`).join('');
-    if (!document.querySelector('.fx-fab')) { document.body.insertAdjacentHTML('beforeend', App.fxButton()); App.refreshFxRate(); }
+    tabbar().innerHTML = App.iconize(TABS.map(([k, ico, label]) =>
+      `<a href="#/${k}" class="${k === active ? 'on' : ''}"><span class="tab-ico">${ico}</span><span>${label}</span></a>`).join(''));
+    if (!document.querySelector('.fx-fab')) { document.body.insertAdjacentHTML('beforeend', App.iconize(App.fxButton())); App.refreshFxRate(); }
     fillWeather();
     onScroll();
   };
@@ -98,7 +100,7 @@
   App.showScreen = (name) => {
     tabbar().hidden = true;
     document.querySelectorAll('.fx-fab').forEach((b) => b.remove());
-    main().innerHTML = SCREENS[name]();
+    main().innerHTML = App.iconize(SCREENS[name]());
   };
 
   // ---------- admin ----------
@@ -222,7 +224,7 @@
           App.store.set(key, w);
         } catch (e) { if (!w) continue; }
       }
-      el.innerHTML = `<span class="wx-ico">${WMO(w.code)}</span> ${w.max}°/${w.min}° · 💧 ${w.rain ?? 0}% גשם`;
+      el.innerHTML = App.iconize(`<span class="wx-ico">${WMO(w.code)}</span> ${w.max}°/${w.min}° · 💧 ${w.rain ?? 0}% גשם`);
     }
   }
 
@@ -248,13 +250,13 @@
     if (!t) return;
     if (t.matches('.arrow.off')) { e.preventDefault(); return; }
     if (t.hasAttribute('data-fx')) {
-      document.body.insertAdjacentHTML('beforeend', App.fxModal());
+      document.body.insertAdjacentHTML('beforeend', App.iconize(App.fxModal()));
       App.fitFxModal();
       document.getElementById('fx-php').focus();
     } else if (t.hasAttribute('data-install')) {
       App.promptInstall();
     } else if (t.hasAttribute('data-install-help')) {
-      document.body.insertAdjacentHTML('beforeend', App.installHelpModal());
+      document.body.insertAdjacentHTML('beforeend', App.iconize(App.installHelpModal()));
     } else if (t.dataset.dismiss) {
       App.store.set(t.dataset.dismiss, true); App.render();
     } else if (t.hasAttribute('data-push')) {
@@ -384,11 +386,11 @@
       const res = await fetch('version.json', { cache: 'no-store' });
       const { v } = await res.json();
       if (v && v !== myVersion) {
-        document.body.insertAdjacentHTML('beforeend', `
+        document.body.insertAdjacentHTML('beforeend', App.iconize(`
           <div id="update-bar" class="update-bar" role="status">
             <span>✨ גרסה חדשה מוכנה</span>
             <button class="btn" onclick="location.reload()">🔄 עדכון</button>
-          </div>`);
+          </div>`));
       }
     } catch (e) { /* offline: try again later */ }
   }
