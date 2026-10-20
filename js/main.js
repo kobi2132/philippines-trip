@@ -244,7 +244,7 @@
   };
 
   document.addEventListener('click', async (e) => {
-    const t = e.target.closest('[data-install],[data-install-help],[data-dismiss],[data-push],[data-copy],[data-check],[data-done],[data-show-hotel],[data-close],[data-font],[data-signin],[data-signout],[data-admin-save],[data-fx],[data-list-edit],[data-list-add],[data-list-del],[data-member-add],[data-member-del],[data-member-confirm],[data-print],.arrow.off');
+    const t = e.target.closest('[data-install],[data-install-help],[data-dismiss],[data-push],[data-copy],[data-check],[data-done],[data-show-hotel],[data-close],[data-font],[data-signin],[data-signout],[data-admin-save],[data-fx],[data-list-edit],[data-list-more],[data-list-add],[data-list-del],[data-member-add],[data-member-del],[data-member-confirm],[data-print],.arrow.off');
     if (!t) return;
     if (t.matches('.arrow.off')) { e.preventDefault(); return; }
     if (t.hasAttribute('data-fx')) {
@@ -278,6 +278,8 @@
     } else if (t.dataset.done) {
       e.preventDefault(); // the tick sits inside a card's fold header: don't open/close the card
       App.toggleDone(t.dataset.done); App.render();
+    } else if (t.dataset.listMore) {
+      App.listOpen[t.dataset.listMore] = !App.listOpen[t.dataset.listMore]; App.render();
     } else if (t.dataset.listEdit) {
       App.editList = App.editList === t.dataset.listEdit ? null : t.dataset.listEdit; App.render();
     } else if (t.dataset.listAdd) {
