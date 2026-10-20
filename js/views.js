@@ -526,7 +526,6 @@
     const T = App.trip, I = T.info;
     const wa = T.contact.whatsapp ? `https://wa.me/${T.contact.whatsapp.replace(/\D/g, '')}` : null;
     return `<h1 class="page-h">ℹ️ מידע חשוב</h1>
-      ${wa ? `<a class="btn btn-wide btn-wa" href="${wa}" target="_blank" rel="noopener">💬 וואטסאפ ל${esc(T.contact.name)}</a>` : ''}
       ${App.canInstall() ? `<section class="card"><div class="card-title"><span class="ico ico-teal">📲</span><h3>התקנה במסך הבית</h3></div>${App.installCard(false)}</section>` : ''}
       <section class="card"><div class="card-title"><span class="ico ico-red">🆘</span><h3>חירום</h3></div>
         <a class="btn btn-wide btn-sos" href="tel:${esc(I.emergencyPhone)}">📞 חיוג לחירום <bdi>${esc(I.emergencyPhone)}</bdi></a>
@@ -541,6 +540,7 @@
         <p>🕐 ${esc(I.timeDiff)}</p><p class="clocks" data-clocks>${App.clocks()}</p>
         <p>🔌 ${esc(I.plug)}</p>
         <p>💵 המטבע: ${esc(I.currency.name)} (להמרה: כפתור 💱)</p></section>
+      ${wa ? `<a class="btn btn-wide btn-wa" href="${wa}" target="_blank" rel="noopener">💬 וואטסאפ ל${esc(T.contact.name)}</a>` : ''}
       ${pushLine()}
       <div class="text-size"><span>🔎 גודל טקסט</span><button data-font="-1">א-</button><button data-font="1">א+</button><button class="font-reset" data-font="0">רגיל</button></div>
       ${App.user ? `<p class="muted center">מחוברים בתור ${esc(App.user.email)} · <a href="#" data-signout>התנתקות</a></p>` : ''}

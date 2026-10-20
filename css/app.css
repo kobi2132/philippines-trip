@@ -156,7 +156,7 @@ small { font-size: .85rem; }
 .btn-nav { background: #e0f2fe; color: #075985; }
 .btn-show { background: #fef3c7; color: #92400e; width: 100%; }
 .btn-wide { width: 100%; background: var(--teal); color: #fff; font-size: 1rem; }
-.btn-wa { background: #25d366; }
+.btn-wa { background: #dcfce7; color: #166534; }
 .btn-google { background: #fff; color: var(--text); border: 2px solid var(--line); }
 
 /* attractions */
