@@ -70,8 +70,9 @@
   const SCREENS = {
     login: () => `
       <div class="center-screen">
-        <div class="hero-emoji">🌴✈️🏝️</div>
-        <h1>הטיול לפיליפינים</h1>
+        <img class="brand-logo-big" src="icons/logo.png" alt="">
+        <h1 class="brand-name-big">יאללה טסים</h1>
+        <p class="brand-sub">הטיול לפיליפינים</p>
         <p>נכנסים פעם אחת עם חשבון הגוגל, ומשם הכל שמור בטלפון.</p>
         <button class="btn btn-wide btn-google" data-signin>🔑 כניסה עם Google</button>
         <p class="muted" id="login-err"></p>

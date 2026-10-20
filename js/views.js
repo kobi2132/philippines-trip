@@ -341,7 +341,7 @@
     const days = App.daysBetween(App.today(), T.start);
     return `
       <header class="hero">
-        <div class="hero-emoji">🌴🛫🧳</div>
+        <div class="brand"><img src="icons/logo.png" alt=""><span>יאללה טסים</span></div>
         <h1>${esc(T.travelers)}</h1>
         <p>${esc(T.title)} בעוד</p>
         <div class="countdown"><b>${days}</b><span>${days === 1 ? 'יום' : 'ימים'}</span></div>
