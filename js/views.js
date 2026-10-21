@@ -114,7 +114,7 @@
       ${opts.showAirportBy ? `<div class="big-callout">🕐 להיות בשדה התעופה עד <b>${App.airportBy(f)}</b><small>${f.international ? '3 שעות לפני טיסה בינלאומית' : 'שעתיים לפני טיסת פנים'}</small></div>` : ''}
       ${body}
       ${f.arrivalTransfer ? `<p class="note">🔀 ${esc(f.arrivalTransfer)}</p>` : ''}
-      <details class="more"><summary>🧳 כבודה</summary><p>${esc(f.baggage)}</p><p>${esc(f.carryOn)}</p></details>
+      <details class="more"><summary><span>🧳 כבודה</span><span class="fold-btn"></span></summary><p>${esc(f.baggage)}</p><p>${esc(f.carryOn)}</p></details>
       <div class="booking booking-flight"><div class="booking-id"><span>🔖 צ'ק אין ומספר הזמנה</span><b class="code">${esc(f.booking)}</b></div><div class="booking-btns">${checkinBtn(f)}${copyBtn(f.booking)}</div></div>
     </section>`;
   };
@@ -285,7 +285,6 @@
         <span><bdi>${App.weekday(date)} ${App.shortDate(date)}</bdi>${n >= 1 && n <= App.totalDays() ? ` · יום ${n}/${App.totalDays()}` : ''}</span>
       </div></div>`;
     html += dayNav(date);
-    App.flightsOn(App.addDays(date, 1)).forEach((f) => { html += checkinReminder(f); });
     if (info.prep) return html + eveContent();
 
     // Order: leave hotel → get to airport → fly → transfers → tonight's hotel → things to do
@@ -320,7 +319,7 @@
       </section>
       ${fold('day', f.id, false, flightSummary(f), flightCard(f))}
       ${checklistCard('packing', '🧳', 'ico-orange', 'רשימת אריזה')}
-      ${checklistCard('before', '📝', 'ico-blue', 'מה עוד צריך לעשות לפני הטיול')}`;
+      ${checklistCard('before', '📝', 'ico-blue', 'לפני הטיול', true)}`;
   };
 
   const afterContent = () => {
@@ -330,7 +329,7 @@
     return `
     <section class="card hero-card">
       <h2>ברוכים השבים! 🏡</h2>
-      <p>${App.totalDays()} ימים, ${T.flights.reduce((s, f) => s + f.legs.length, 0)} טיסות, ${T.hotels.length} מלונות. איזה טיול!</p>
+      <p>${App.totalDays()} ימים, ${T.flights.length} טיסות, ${T.hotels.length} מלונות. איזה טיול!</p>
       ${done ? `<div class="big-callout">✅ עשיתם <b>${done}</b> מתוך ${T.attractions.length} אטרקציות</div>` : ''}
       <div class="tabs tabs-wrap">${places.map((k) => `<a class="tab" href="#/day/${T.days.find((d) => d.place === k).date}" style="--accent:${App.place(k).color}">${esc(App.place(k).name)}</a>`).join('')}</div>
     </section>`;
@@ -348,7 +347,7 @@
         <p class="muted">🛫 המראה ב${App.longDate(App.localDate(T.flights[0].legs[0].dep))}, ${App.localTime(T.flights[0].legs[0].dep)}${App.localDate(T.flights[0].legs[0].dep) > T.start ? `<br>(בלילה שבין ${App.weekday(T.start)} ל${App.weekday(App.localDate(T.flights[0].legs[0].dep))})` : ''}</p>
       </header>
       <a class="btn btn-wide" href="#/day/${T.start}">👀 להציץ ביום הראשון</a>
-      ${checklistCard('before', '📝', 'ico-blue', 'מה עוד צריך לעשות לפני הטיול', true)}
+      ${checklistCard('before', '📝', 'ico-blue', 'לפני הטיול', true)}
       ${days <= 7 ? checklistCard('packing', '🧳', 'ico-orange', 'רשימת אריזה', true) : ''}`;
   };
 
@@ -370,18 +369,6 @@
       <summary>${summary}<span class="fold-btn"></span></summary>
       ${full}
     </details>`;
-  };
-
-  // Day before a flight: online check-in opens 24 hours before departure.
-  const checkinReminder = (f) => {
-    const c = CHECKIN[f.legs[0].flightNo.slice(0, 2)];
-    const opens = App.shiftIso(f.legs[0].dep, -60 * ((c && c[2]) || 24));
-    const when = App.localDate(opens) < App.addDays(f.date, -1) ? 'כבר פתוח' : `נפתח היום ב-<b>${App.localTime(opens)}</b>`;
-    const route = `${esc(f.legs[0].from.city || f.legs[0].from.name)} ← ${esc(f.legs[f.legs.length - 1].to.city || f.legs[f.legs.length - 1].to.name)}`;
-    // Taking off after midnight: "tomorrow night", so it isn't read as tomorrow morning.
-    const what = App.localDate(f.legs[0].dep) > f.date ? `מחר בלילה טסים (${route}, ההמראה <b>${App.localTime(f.legs[0].dep)}</b>)` : `מחר טיסה (${route})`;
-    return `<div class="guide guide-checkin"><span>📱 ${what}. צ'ק אין אונליין ${when}</span>
-      ${c ? `<a class="copy checkin" href="${c[1]}" target="_blank" rel="noopener">📱 צ'ק אין</a>` : ''}</div>`;
   };
 
   const transferFold = (t) => {
@@ -492,9 +479,11 @@
       });
       return runs.map(([a, z]) => `<bdi>${a === z ? App.shortDate(a) : `${App.parseDate(a).getDate()}-${App.shortDate(z)}`}</bdi>`).join(', ');
     };
+    // A place whose last day is behind us is faded, like past flights and hotels.
+    const over = (k) => !T.days.some((d) => !d.prep && d.place === k && d.date >= App.today());
     // All places at once in a grid: nothing hidden off screen, nothing to scroll sideways.
     return `<h1 class="page-h">🌴 אטרקציות</h1>
-      <div class="place-grid">${order.map((k) => `<a class="${k === sel ? 'on' : ''}" href="#/attractions/${k}" style="--accent:${App.place(k).color}">${esc(App.place(k).name)}<small>${stays(k)}</small></a>`).join('')}</div>
+      <div class="place-grid">${order.map((k) => `<a class="${k === sel ? 'on' : ''} ${over(k) ? 'past' : ''}" href="#/attractions/${k}" style="--accent:${App.place(k).color}">${esc(App.place(k).name)}<small>${stays(k)}</small></a>`).join('')}</div>
       ${T.attractions.filter((a) => a.place === sel).sort((a, b) => App.isDone(a.id) - App.isDone(b.id)).map(attractionFold).join('')}`;
   };
 
@@ -532,11 +521,11 @@
         <h4 class="sub-h">🇮🇱 שגרירות ישראל במנילה</h4>
         <div class="btn-row">
           ${I.embassyPhone ? `<a class="btn btn-nav" href="tel:${esc(I.embassyPhone.replace(/[^\d+]/g, ''))}">📞 התקשרות</a>` : `<a class="btn btn-nav" href="${esc(I.embassyUrl)}" target="_blank" rel="noopener">🌐 אתר השגרירות</a>`}
-          <a class="btn btn-nav" href="${App.mapsUrl('Embassy of Israel, Manila', 'driving')}" target="_blank" rel="noopener">🚕 ניווט</a>
+          <a class="btn btn-nav" href="${App.mapsUrl('Embassy of Israel, Manila', 'driving')}" target="_blank" rel="noopener">🧭 ניווט</a>
         </div></section>
       ${I.insurance.company ? `<section class="card"><div class="card-title"><span class="ico ico-blue">🛡️</span><h3>ביטוח</h3></div>
         <p><b>${esc(I.insurance.company)}</b></p><div class="booking"><span>🔖 פוליסה</span><b class="code">${esc(I.insurance.policy)}</b>${copyBtn(I.insurance.policy)}</div>${I.insurance.phone ? `<a class="btn" href="tel:${esc(I.insurance.phone)}">📞 מוקד הביטוח</a>` : ''}</section>` : ''}
-      <section class="card"><div class="card-title"><span class="ico ico-purple">🧭</span><h3>שימושי לדעת</h3></div>
+      <section class="card"><div class="card-title"><span class="ico ico-purple">ℹ️</span><h3>שימושי לדעת</h3></div>
         <p>🕐 ${esc(I.timeDiff)}</p><p class="clocks" data-clocks>${App.clocks()}</p>
         <p>🔌 ${esc(I.plug)}</p>
         <p>💵 המטבע: ${esc(I.currency.name)} (להמרה: כפתור 💱)</p></section>

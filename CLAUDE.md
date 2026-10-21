@@ -76,6 +76,9 @@ The repo is **public**: never commit personal trip data (bookings, phone numbers
 - Modals: `.modal-box` defaults to ltr, give each box its own rtl class.
 - Flight, hotel and transfer cards are folding `details` cards; one open per list. Lists start closed; a tag marks the next flight and tonight's hotel (decision in #13). A flight still on its way the day after `date` (connection, landing) shows on that day too.
 - Icons: views keep writing emoji; `App.iconize` (in `js/util.js`, run in `App.render`) swaps every emoji listed in `App.ICONS` for our own image from `icons/ui/`. One emoji = one meaning (✅ only means done). A new icon: add the PNG, its emoji in `ICONS`, and its name in `sw.js`. The admin screen keeps plain emoji (its JSON editor). WhatsApp buttons use the real WhatsApp logo (`App.icon('whatsapp')`), not 💬, which stays "chat/note".
+- No online check-in reminder on the day page or the eve (Jacob, 2026-10-21): Jacob does the check-in after his Telegram alert, and the parents could mix it up with the airport check-in desk. The check-in button stays inside the flight card.
+- Tab bar names stop growing with the text-size buttons (six must fit side by side); the icons grow instead.
+- Attraction "עשינו?" stays in the bottom-left corner; the page's bottom space lets it scroll clear of the 💱 button (Jacob, 2026-10-21).
 - Navigation buttons open Google Maps (`App.navButtons`). Hotels have WhatsApp/call buttons and "🪧 הראה לנהג".
 - Phases: `before` (countdown home with the "before" list; packing list joins in the last 7 days), `eve` (day before: flight card, packing and before lists), `trip` (today = day page), `after` (summary).
 - Text-size buttons and the push row stay at the bottom of the Info screen (Jacob's choice). The FX button hides on scroll down, on the login screen and on days in Israel.
