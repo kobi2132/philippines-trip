@@ -46,7 +46,7 @@
       const items = [];
       App.flightsOn(x.date).forEach((f) => f.legs.forEach((l) => items.push(`✈️ ${ltr(l.flightNo)} ${legLine(l)} ${t(l.dep)}`)));
       const out = App.hotelCheckingOut(x.date);
-      if (out) items.push(`🧳 צ'ק אאוט ${ltr(out.name)}`);
+      if (out) items.push(`👋 צ'ק אאוט ${ltr(out.name)}`);
       App.transfersOn(x.date).forEach((tr) => items.push(`🚕 ${esc(tr.title)}`));
       const inn = T.hotels.find((h) => h.checkIn === x.date);
       if (inn) items.push(`🏨 צ'ק אין ${ltr(inn.name)}`);

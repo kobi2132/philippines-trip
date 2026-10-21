@@ -74,7 +74,7 @@ window.App = window.App || {};
     '📅': 'date', '🕐': 'time', '🕘': 'time', '⏱️': 'duration', '📍': 'place', '🌙': 'night', '🛎️': 'reception',
     '🧳': 'suitcase', '🎒': 'suitcase', '📝': 'checklist', '🆘': 'sos', '🏊': 'water', '⭐': 'must', '💪': 'boot',
     '🚪': 'gate', '🎫': 'ticket', '🔒': 'lock', '📡': 'radar', '🔁': 'connection', '🔀': 'connection', '⚠️': 'warning',
-    '👍': 'thumbs-up', '🔗': 'link', '🛏️': 'bed', '💡': 'tip', '💌': 'message',
+    '👍': 'thumbs-up', '🔗': 'link', '🛏️': 'bed', '💡': 'tip', '💌': 'message', '⛰️': 'sightseeing', '👋': 'checkout',
     '👀': 'eye', '👁️': 'eye', '➕': 'add', '🗑️': 'trash', '↩️': 'back', '👇': 'more', '👆': 'less', '📲': 'install',
     '🌐': 'web', '🛡️': 'shield', '🔌': 'plug', '💵': 'money', '⚙️': 'settings',
     '☀️': 'sun', '🌤️': 'partly', '☁️': 'cloud', '🌫️': 'fog', '🌧️': 'rain', '🌦️': 'showers', '⛈️': 'storm', '💧': 'drop',

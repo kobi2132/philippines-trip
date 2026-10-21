@@ -142,7 +142,7 @@
     const tm = App.hotelTimes(h);
     const nights = App.daysBetween(h.checkIn, h.checkOut);
     const banner = opts.noBanner ? '' : mode === 'checkout'
-      ? `<div class="big-callout warn">🧳 צ'ק אאוט היום עד <b>${tm.checkOutTime}</b> ${estimatedMark(tm.estimated)}</div>`
+      ? `<div class="big-callout warn">👋 צ'ק אאוט היום עד <b>${tm.checkOutTime}</b> ${estimatedMark(tm.estimated)}</div>`
       : mode === 'checkin' ? `<div class="big-callout">🛎️ צ'ק אין מ-<b>${tm.checkInTime}</b> ${estimatedMark(tm.estimated)}</div>` : '';
     return `
     <section class="card card-hotel" style="--accent:${p.color}">
@@ -157,7 +157,7 @@
       <div class="facts">
         <div class="fact"><span>📅 תאריכים</span><b>${App.range(h.checkIn, h.checkOut)}</b><small>${nights} ${nights === 1 ? 'לילה' : 'לילות'}</small></div>
         <div class="fact"><span>🛎️ צ'ק אין</span><b>${tm.checkInTime}</b></div>
-        <div class="fact"><span>🧳 צ'ק אאוט</span><b>${tm.checkOutTime}</b></div>
+        <div class="fact"><span>👋 צ'ק אאוט</span><b>${tm.checkOutTime}</b></div>
       </div>
       <div class="booking"><span>🔖 מספר הזמנה</span>${/\d/.test(h.booking) ? `<b class="code">${esc(h.booking)}</b>${copyBtn(h.booking)}` : `<b>${esc(h.booking)}</b>`}</div>
       <p>🛏️ ${esc(h.room)}</p>
@@ -171,7 +171,7 @@
     const t = a.tags || {};
     const done = App.isDone(a.id);
     const tick = App.canEdit() ? `<button class="attr-tick${done ? ' on' : ''}" data-done="${a.id}" aria-pressed="${done}">${done ? '✅ עשינו' : '☐ עשינו?'}</button>` : '';
-    const summary = `<div class="card-title"><span class="ico ico-green">${t.water ? '🏝️' : '🧭'}</span><h3>${esc(a.name)}</h3>${a.mustSee ? '<span class="must">⭐ חובה</span>' : ''}</div>
+    const summary = `<div class="card-title"><span class="ico ico-green">${t.water ? '🏝️' : '⛰️'}</span><h3>${esc(a.name)}</h3>${a.mustSee ? '<span class="must">⭐ חובה</span>' : ''}</div>
       <div class="chips">
         ${t.duration ? `<span class="chip">⏱️ ${esc(t.duration)}</span>` : ''}
         ${t.difficulty ? `<span class="chip">💪 ${esc(t.difficulty)}</span>` : ''}
@@ -395,7 +395,7 @@
 
   const hotelGuide = (h, mode) => {
     const tm = App.hotelTimes(h);
-    if (mode === 'checkout') return `<div class="guide guide-warn">🧳 צ'ק אאוט היום עד <b>${tm.checkOutTime}</b></div>`;
+    if (mode === 'checkout') return `<div class="guide guide-warn">👋 צ'ק אאוט היום עד <b>${tm.checkOutTime}</b></div>`;
     if (mode === 'checkin') return `<div class="guide">🛎️ צ'ק אין היום מ-<b>${tm.checkInTime}</b></div>`;
     return '';
   };
