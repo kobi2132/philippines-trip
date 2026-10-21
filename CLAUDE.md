@@ -44,11 +44,14 @@ The repo is **public**: never commit personal trip data (bookings, phone numbers
 ### Firebase
 
 - Project `philippines-trip-8eb57`. Firestore: `trips/{tripId}` = `{ data, members: {email: role}, updatedAt }`; subcollections `status/flights` and `status/notifier` (written by the notifier), `shared/state` (checklists, done marks), `devices/{uid}` (push tokens).
+- `shared/state` saves every change as its own field (`items.{list}.{itemId}` = `{done}`, `{deleted: true}` or a new `{text, order}`; `done.{attractionId}`), never a whole list, so two phones (one offline) never wipe each other. A list = the trip data's items (id `src:<text>`) plus those changes; an older whole-list copy in `lists.{list}` is still read as the base. Items added to `checklists` in `trip.json` join the parents' lists; items they deleted stay deleted.
+- `devices/{uid}` holds `tokens.{deviceId}` (one per phone or computer; older docs a single `token`). The app re-registers the token quietly on every start; the notifier sends to all of them and deletes dead ones.
 - Roles: `traveler` (view + tick lists), `viewer` (read only, sees "מצב צפייה"), `admin` (Jacob, everything). Rules enforce it; changing `firestore.rules` means Jacob must paste the new rules into the console, so say so in the PR summary.
 - Claude never writes to Firestore directly. Data changes reach the app only when Jacob loads the file in the admin screen.
 
 ### Offline and updates
 
+- `sw.js` serves network-first, but falls back to the cached copy after 3 seconds (weak signal), and refreshes the cache when the slow answer arrives.
 - **Bump `VERSION` in `sw.js` in every PR that changes app files**, and add any new file to its `FILES` list and to `index.html`.
 - The app shows the last cached trip immediately, then live data. Background re-renders must not wipe the admin form or a list item being typed.
 
@@ -84,6 +87,7 @@ The repo is **public**: never commit personal trip data (bookings, phone numbers
 - `.github/workflows/notifier.yml` runs every 5 minutes in Oct-Nov; `run.mjs` decides what is due. Pure logic in `schedule.mjs` with tests in `schedule.test.mjs` (`cd notifier && node --test`); keep new logic pure and tested.
 - Push (FCM web push) goes to the travelers' phones: eTravel reminder (first whole hour in Israel once the 72h before landing opens, kept within 09:00-21:00), packing the day before, morning messages (on a day they wake up mid-flight: connection time and landing instead), flight day airport-by time, flight changes.
 - Telegram goes to **Jacob only**: flight changes, landed, check-in opening, failures. Format: bold title, then one "label: value" per line, route (from ← to) on every message, one message per leg. Every line gets a U+200F mark (done in `telegram.mjs`). Never print the bot URL (it has the token).
+- `run.mjs` saves its state after every message it sends, and a failed flight check counts as a check (waits its normal interval), so a failure can't repeat pushes or burn the quota.
 - AeroDataBox free plan: 400 requests/month. Polling: daily until 4 days out for the first flight, every 12h from 4 days, 3h on the last day, 20 min around departure and landing. Any change must keep the worst case under the quota; simulate it.
 - Airline check-in windows live in **two places that must match**: `CHECKIN` in `js/views.js` and `CHECKIN` + `CHECKIN_HOURS` in `notifier/schedule.mjs` (Etihad 30h, others 24h). `airportBy` (3h international, 2h domestic) is also in both `js/trip.js` and `schedule.mjs`.
 - Test from a branch without merging: run `notifier.yml` on that ref with `samples: true` (one of every Telegram message to Jacob, optionally `one_sample`), or `test: true` (push + Telegram test).

@@ -1,5 +1,5 @@
 // Offline support: app files are cached; bump VERSION to ship an update.
-const VERSION = 'v50';
+const VERSION = 'v51';
 const FILES = [
   './', 'index.html', 'manifest.webmanifest', 'css/app.css',
   'js/config.js', 'js/util.js', 'js/shared.js', 'js/install.js', 'js/fx.js', 'js/trip.js', 'js/map.js', 'js/views.js', 'js/print.js', 'js/backend.js', 'js/main.js',
@@ -29,13 +29,18 @@ self.addEventListener('fetch', (e) => {
   if (e.request.method !== 'GET') return;
   const cacheable = url.origin === location.origin || url.host.endsWith('gstatic.com') || url.host === 'fonts.googleapis.com';
   if (!cacheable || url.pathname.includes('/google.firestore')) return;
-  e.respondWith(
-    // Own files skip the browser's HTTP cache (GitHub Pages keeps them 10 minutes), so updates arrive at once.
-    (url.origin === location.origin ? fetch(new Request(e.request, { cache: 'no-cache' })) : fetch(e.request)).then((res) => {
-      if (res.ok || res.type === 'opaque') { const copy = res.clone(); caches.open(VERSION).then((c) => c.put(e.request, copy)); }
-      return res;
-    }).catch(() => caches.match(e.request, { ignoreSearch: url.origin === location.origin }))
-  );
+  // Own files skip the browser's HTTP cache (GitHub Pages keeps them 10 minutes), so updates arrive at once.
+  let saved = Promise.resolve();
+  const net = (url.origin === location.origin ? fetch(new Request(e.request, { cache: 'no-cache' })) : fetch(e.request)).then((res) => {
+    if (res.ok || res.type === 'opaque') { const copy = res.clone(); saved = caches.open(VERSION).then((c) => c.put(e.request, copy)); }
+    return res;
+  });
+  // A slow answer still refreshes the cache for next time.
+  e.waitUntil(net.then(() => saved).catch(() => {}));
+  const cached = () => caches.match(e.request, { ignoreSearch: url.origin === location.origin });
+  // A weak signal can leave a request hanging for minutes: after 3 seconds, show the saved copy.
+  const slow = new Promise((r) => setTimeout(r, 3000)).then(cached).then((c) => c || net);
+  e.respondWith(Promise.race([net, slow]).catch(() => cached().then((c) => c || Response.error())));
 });
 
 // Push from the notifier job (FCM web push, data-only: { title, body, link }).

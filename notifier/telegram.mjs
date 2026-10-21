@@ -10,11 +10,18 @@ const rtl = (text) => text.split('\n').map((l) => '\u200F' + l).join('\n');
 export async function telegram(text) {
   if (!telegramOn()) return false;
   text = rtl(text);
-  const res = await fetch(`https://api.telegram.org/bot${process.env.TELEGRAM_BOT_TOKEN}/sendMessage`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ chat_id: process.env.TELEGRAM_CHAT_ID, text, parse_mode: 'HTML', disable_web_page_preview: true }),
-  });
+  let res;
+  // A network failure must not stop the run (the reminders after it would never be saved as sent).
+  try {
+    res = await fetch(`https://api.telegram.org/bot${process.env.TELEGRAM_BOT_TOKEN}/sendMessage`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ chat_id: process.env.TELEGRAM_CHAT_ID, text, parse_mode: 'HTML', disable_web_page_preview: true }),
+    });
+  } catch (e) {
+    console.error('telegram failed', e.message); // never the URL: it carries the token
+    return false;
+  }
   if (!res.ok) {
     // Never print the URL: it carries the token.
     console.error('telegram failed', res.status, (await res.text()).slice(0, 200));

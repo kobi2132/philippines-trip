@@ -18,8 +18,14 @@ const stateRef = db.doc(`trips/${tripId}/status/notifier`);
 const flightsRef = db.doc(`trips/${tripId}/status/flights`);
 
 async function push(title, body, link = '#/today') {
+  // Each person's document holds one token per device (older ones a single `token` field).
   const devices = await tripRef.collection('devices').get();
-  const tokens = devices.docs.map((d) => d.get('token')).filter(Boolean);
+  const targets = [];
+  for (const d of devices.docs) {
+    if (d.get('token')) targets.push({ token: d.get('token'), ref: d.ref, field: 'token' });
+    for (const [id, t] of Object.entries(d.get('tokens') || {})) if (t && t.token) targets.push({ token: t.token, ref: d.ref, field: `tokens.${id}` });
+  }
+  const tokens = [...new Set(targets.map((x) => x.token))];
   if (!tokens.length) { console.log('no devices registered'); return; }
   const res = await getMessaging().sendEachForMulticast({
     tokens,
@@ -32,7 +38,7 @@ async function push(title, body, link = '#/today') {
   await Promise.all(res.responses.map((r, i) => {
     const code = r.error && r.error.code;
     if (code === 'messaging/registration-token-not-registered' || code === 'messaging/invalid-registration-token') {
-      return devices.docs.find((d) => d.get('token') === tokens[i]).ref.delete();
+      return Promise.all(targets.filter((x) => x.token === tokens[i]).map((x) => x.ref.update({ [x.field]: FieldValue.delete() })));
     }
     return null;
   }));
@@ -70,17 +76,22 @@ const state = (await stateRef.get()).data() || {};
 const sent = state.sent || {};
 const lastChecked = state.lastChecked || {};
 const notified = state.notified || {};
+// Saved after every message, so a failure later in the run can't make the next run send it again.
+const saveState = () => stateRef.set({ sent, lastChecked, notified, tgErrorAt: state.tgErrorAt || 0, ranAt: now.toISOString() });
 
 // 1. Daily and flight reminders.
 for (const r of dueReminders(trip, now, sent)) {
-  await push(r.title, r.body, r.link);
-  sent[r.key] = now.toISOString();
+  try {
+    await push(r.title, r.body, r.link);
+    sent[r.key] = now.toISOString();
+    await saveState();
+  } catch (e) { console.error('push failed', r.key, e.message); } // not marked sent: tried again next run
 }
 
 // 1b. Telegram reminders for Jacob (check-in 24h before, flight day morning).
 if (telegramOn()) {
   for (const r of dueTelegram(trip, now, sent)) {
-    if (await telegram(r.text)) sent[r.key] = now.toISOString();
+    if (await telegram(r.text)) { sent[r.key] = now.toISOString(); await saveState(); }
   }
 }
 
@@ -89,9 +100,10 @@ const apiKey = process.env.AERODATABOX_KEY;
 const live = {};
 if (apiKey) {
   for (const { key, leg } of legsToCheck(trip, now, lastChecked, notified)) {
+    // A failed check counts as a check: retrying every run would use up the monthly quota in a day.
+    lastChecked[key] = now.getTime();
     try {
       const s = await fetchLegStatus(leg, apiKey);
-      lastChecked[key] = now.getTime();
       if (!s) continue;
       live[key] = s;
       const alert = flightChangeAlert(leg, notified[key], s);
@@ -102,6 +114,7 @@ if (apiKey) {
       const landed = landedAlert(leg, notified[key], s);
       if (landed) await telegram(landed);
       notified[key] = { status: s.status, depLocal: s.depLocal, gate: s.gate };
+      await saveState();
     } catch (e) {
       console.error(e.message);
       // Tell Jacob when checking flights fails, at most every 6 hours.
@@ -111,5 +124,5 @@ if (apiKey) {
 }
 
 if (Object.keys(live).length) await flightsRef.set({ legs: live, updatedAt: FieldValue.serverTimestamp() }, { merge: true });
-await stateRef.set({ sent, lastChecked, notified, tgErrorAt: state.tgErrorAt || 0, ranAt: now.toISOString() });
+await saveState();
 console.log('done', now.toISOString());

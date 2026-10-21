@@ -110,3 +110,13 @@ test('mid-flight morning: connection and landing instead of good morning', () =>
   const e = plannedReminders(t3).find((x) => x.key === 'etravel');
   assert.deepEqual([e.date, e.time], ['2026-11-02', '16:00']);
 });
+
+test('a flight-status service that keeps failing still stays within the monthly quota', () => {
+  // run.mjs counts a failed check as a check; nothing is ever learned, so no leg is marked landed.
+  const lastChecked = {};
+  let n = 0;
+  for (let t = Date.parse('2026-10-10T00:00Z'); t < Date.parse('2026-11-10T00:00Z'); t += 5 * 60e3) {
+    for (const { key } of legsToCheck(trip, new Date(t), lastChecked, {})) { n++; lastChecked[key] = t; }
+  }
+  assert.ok(n < 150, `${n} checks`); // about 120; retrying every run would be thousands
+});

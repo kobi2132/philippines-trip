@@ -278,8 +278,11 @@
       }
       t.disabled = false;
     } else if (t.dataset.copy) {
-      try { await navigator.clipboard.writeText(t.dataset.copy); t.textContent = '✅ הועתק'; } catch (err) { t.textContent = t.dataset.copy; }
-      setTimeout(() => { t.textContent = '📋 העתק'; }, 2000);
+      // Keep the button's own label (with our icon) to put back afterwards, even after a quick second tap.
+      if (!t.dataset.label) t.dataset.label = t.innerHTML;
+      try { await navigator.clipboard.writeText(t.dataset.copy); t.innerHTML = App.iconize('✅ הועתק'); } catch (err) { t.textContent = t.dataset.copy; }
+      clearTimeout(t.copyTimer);
+      t.copyTimer = setTimeout(() => { t.innerHTML = t.dataset.label; }, 2000);
     } else if (t.dataset.done) {
       e.preventDefault(); // the tick sits inside a card's fold header: don't open/close the card
       App.toggleDone(t.dataset.done); App.render();
@@ -327,7 +330,8 @@
 
   document.addEventListener('change', (e) => {
     const t = e.target;
-    if (t.dataset.check) App.toggleItem(t.dataset.check, t.dataset.id, t.checked);
+    // Redraw so the count, the bar and the order follow the tick at once.
+    if (t.dataset.check) { App.toggleItem(t.dataset.check, t.dataset.id, t.checked); App.render(); }
   });
 
   // Add the typed item and keep the box open for the next one.
