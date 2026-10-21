@@ -50,6 +50,32 @@
     }, () => { sharedWatched = false; });
   }
 
+  // The phone's push token can change (a Chrome update, cleared data) or be dropped by the notifier once it
+  // stops working. Registering again on every start, quietly, keeps notifications arriving.
+  async function registerPush() {
+    const { fsMod, db, auth } = fb;
+    const msgMod = await import(SDK + 'firebase-messaging.js');
+    const messaging = msgMod.getMessaging();
+    const token = await msgMod.getToken(messaging, {
+      vapidKey: cfg.vapidKey, serviceWorkerRegistration: await navigator.serviceWorker.ready,
+    });
+    // One document per person, one entry per phone or computer, so a second device doesn't replace the first.
+    let deviceId = App.store.get('device_id', null);
+    if (!deviceId) { deviceId = Date.now().toString(36) + Math.random().toString(36).slice(2, 8); App.store.set('device_id', deviceId); }
+    await fsMod.setDoc(fsMod.doc(db, 'trips', cfg.tripId, 'devices', auth.currentUser.uid), {
+      email: App.user.email,
+      tokens: { [deviceId]: { token, userAgent: navigator.userAgent.slice(0, 200), updatedAt: fsMod.serverTimestamp() } },
+    }, { merge: true });
+  }
+  let pushRefreshed = false;
+  function refreshPush() {
+    if (pushRefreshed || !App.store.get('push_on', false) || !App.pushAvailable()) return;
+    pushRefreshed = true;
+    // Permission taken away in the phone's settings: show notifications as off, not "active".
+    if (Notification.permission !== 'granted') { App.store.set('push_on', false); App.render(); return; }
+    registerPush().catch(() => { pushRefreshed = false; /* no signal: try again next start */ });
+  }
+
   App.backend = {
     async start() {
       // 1. Preview build: data baked into the page.
@@ -82,6 +108,7 @@
           App.store.set(cacheKey(), { trip: d.data, role, user: App.user });
           useTrip(d.data, role, 'live');
           watchShared();
+          refreshPush();
         }, (err) => {
           if (err.code === 'permission-denied') App.showScreen('no-access');
         });
@@ -131,15 +158,7 @@
       if (!cfg.vapidKey) throw new Error('vapid key missing');
       const perm = await Notification.requestPermission();
       if (perm !== 'granted') return perm;
-      const { fsMod, db, auth } = fb;
-      const msgMod = await import(SDK + 'firebase-messaging.js');
-      const messaging = msgMod.getMessaging();
-      const token = await msgMod.getToken(messaging, {
-        vapidKey: cfg.vapidKey, serviceWorkerRegistration: await navigator.serviceWorker.ready,
-      });
-      await fsMod.setDoc(fsMod.doc(db, 'trips', cfg.tripId, 'devices', auth.currentUser.uid), {
-        token, email: App.user.email, userAgent: navigator.userAgent.slice(0, 200), updatedAt: fsMod.serverTimestamp(),
-      });
+      await registerPush();
       App.store.set('push_on', true);
       return 'granted';
     },

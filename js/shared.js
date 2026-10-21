@@ -13,30 +13,46 @@
     App.store.set(cacheKey(), App.shared);
   };
 
+  // Every change is saved as just that one field (one tick, one item), never the whole list: two phones
+  // changing the same list at the same time, or one of them offline, both keep their changes.
   const save = (patch) => {
-    App.setShared({
-      ...App.shared,
-      ...patch,
-      lists: { ...(App.shared.lists || {}), ...(patch.lists || {}) },
-      done: { ...(App.shared.done || {}), ...(patch.done || {}) },
-    });
+    const items = { ...(App.shared.items || {}) };
+    for (const [key, changes] of Object.entries(patch.items || {})) {
+      items[key] = { ...(items[key] || {}) };
+      for (const [id, c] of Object.entries(changes)) items[key][id] = { ...(items[key][id] || {}), ...c };
+    }
+    App.setShared({ ...App.shared, items, done: { ...(App.shared.done || {}), ...(patch.done || {}) } });
     if (App.backend.saveShared) App.backend.saveShared(patch).catch(() => { /* kept locally; retried by Firestore when online */ });
   };
 
-  // Before the first edit, a list is the one from the trip data plus any ticks made on this phone before lists were shared.
+  // A list = its items from the trip data (or, if the travelers edited it before changes were saved one
+  // by one, that saved copy), plus their own changes on top: ticks, added items, deleted items.
+  // Items Jacob adds to the trip data later join the list; an item the travelers deleted stays deleted.
   App.getList = (key) => {
-    const own = (App.shared.lists || {})[key];
-    if (own) return own;
-    const oldTicks = App.store.get('check_' + key, {});
-    return ((App.trip.checklists || {})[key] || []).map((text, i) => ({ id: 'i' + i, text, done: !!oldTicks[i] }));
+    const fromTrip = (App.trip.checklists || {})[key] || [];
+    const old = (App.shared.lists || {})[key];
+    let base;
+    if (old) {
+      const texts = new Set(old.map((it) => it.text));
+      base = [...old.map((it, i) => ({ ...it, order: i })),
+        ...fromTrip.filter((text) => !texts.has(text)).map((text, i) => ({ id: 'src:' + text, text, done: false, order: 1000 + i }))];
+    } else {
+      const oldTicks = App.store.get('check_' + key, {}); // ticks made on this phone before lists were shared
+      base = fromTrip.map((text, i) => ({ id: 'src:' + text, text, done: !!oldTicks[i], order: i }));
+    }
+    const changes = (App.shared.items || {})[key] || {};
+    const byId = new Map(base.map((it) => [it.id, it]));
+    for (const [id, c] of Object.entries(changes)) byId.set(id, { id, done: false, ...(byId.get(id) || {}), ...c });
+    return [...byId.values()].filter((it) => !it.deleted && it.text).sort((a, b) => a.order - b.order)
+      .map(({ id, text, done }) => ({ id, text, done: !!done }));
   };
-  const setList = (key, items) => save({ lists: { [key]: items } });
+  const change = (key, id, c) => save({ items: { [key]: { [id]: c } } });
 
-  App.toggleItem = (key, id, done) => setList(key, App.getList(key).map((it) => it.id === id ? { ...it, done } : it));
-  App.deleteItem = (key, id) => setList(key, App.getList(key).filter((it) => it.id !== id));
+  App.toggleItem = (key, id, done) => change(key, id, { done });
+  App.deleteItem = (key, id) => change(key, id, { deleted: true });
   App.addItem = (key, text) => {
     text = text.trim();
-    if (text) setList(key, [...App.getList(key), { id: Date.now().toString(36), text, done: false }]);
+    if (text) change(key, 'u' + Date.now().toString(36), { text, done: false, order: Date.now() });
   };
 
   App.isDone = (id) => {
