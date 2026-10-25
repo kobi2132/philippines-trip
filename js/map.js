@@ -2,7 +2,7 @@
 (function (App) {
   // Legs inside the Philippines, in travel order: [from, to, mode]
   const LEGS = [
-    ['manila', 'cebu', 'flight'], ['cebu', 'oslob', 'taxi'], ['oslob', 'bohol', 'ferry'],
+    ['manila', 'cebu', 'flight'], ['cebu', 'moalboal', 'taxi'], ['moalboal', 'oslob', 'taxi'], ['oslob', 'bohol', 'ferry'],
     ['bohol', 'cebu', 'ferry'], ['cebu', 'elnido', 'flight'], ['elnido', 'coron', 'flight'],
     ['coron', 'clark', 'flight'], ['clark', 'manila', 'taxi'],
   ];
@@ -12,7 +12,7 @@
   const ICON = { flight: '✈️', ferry: '⛴️', taxi: '🚕' };
   // Label position per place [dx, dy, anchor], tuned so the Cebu cluster stays readable.
   const LABEL = {
-    manila: [14, 6, 'start'], clark: [14, -2, 'start'], cebu: [14, 2, 'start'], oslob: [-14, 12, 'end'],
+    manila: [14, 6, 'start'], clark: [14, -2, 'start'], cebu: [14, 2, 'start'], moalboal: [-14, 2, 'end'], oslob: [-14, 12, 'end'],
     bohol: [14, 14, 'start'], elnido: [-14, 6, 'end'], coron: [14, 6, 'start'],
   };
   // Coastlines from Natural Earth (public domain, 1:10m), simplified to ~1 km. [lon, lat] rings.
@@ -20,7 +20,8 @@
 
   App.routeMap = () => {
     const P = App.trip.places;
-    const lines = LEGS.map(([a, b, mode]) => {
+    // skip a leg whose place is not in the loaded data yet (old cached trip)
+    const lines = LEGS.filter(([a, b]) => P[a] && P[b]).map(([a, b, mode]) => {
       const [x1, y1] = proj(P[a]), [x2, y2] = proj(P[b]);
       // gentle curve so overlapping legs (Cebu <-> Bohol) stay readable
       const mx = (x1 + x2) / 2 + (y2 - y1) * 0.15, my = (y1 + y2) / 2 - (x2 - x1) * 0.15;
