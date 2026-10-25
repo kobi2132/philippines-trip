@@ -13,6 +13,7 @@
 
   App.render = () => {
     if (!App.trip) return;
+    const t0 = performance.now();
     const [name, arg] = route();
     // Background updates must not wipe what the admin is in the middle of editing.
     if (name === 'admin' && document.getElementById('admin-members')) return;
@@ -33,6 +34,7 @@
     document.body.classList.toggle('at-home', App.dayInfo(App.today()).place === 'israel');
     fillWeather();
     onScroll();
+    App.diag.mark(`render ${name} ${Math.round(performance.now() - t0)}ms`);
   };
 
   // When the day header scrolls away, a slim date + place bar takes its place at the top.
@@ -189,7 +191,24 @@
       <section class="card"><div class="card-title"><span class="ico ico-orange">🖨️</span><h3>הדפסה</h3></div>
         <p class="muted">כל פרטי הטיול בכמה עמודים: טיסות, מלונות, הסעות, יום אחר יום ואטרקציות. בחלון ההדפסה בוחרים "שמירה כ-PDF".</p>
         <button class="btn btn-wide" data-print>📄 ייצוא ל-PDF</button>
-      </section>`;
+      </section>
+      ${freezeCard()}`;
+  }
+
+  // Freezes the recorder caught on this phone (js/diag.js). Copy and paste them to Claude.
+  function freezeCard() {
+    const list = App.diag.list();
+    const time = (iso) => new Date(iso).toLocaleString('he-IL', { day: 'numeric', month: 'numeric', hour: '2-digit', minute: '2-digit', second: '2-digit' });
+    const where = (hash) => {
+      const d = /day\/\d{4}-(\d\d)-(\d\d)/.exec(hash || '');
+      return d ? `יום ${+d[2]}.${+d[1]}` : ((TABS.find(([k]) => (hash || '#/today').startsWith('#/' + k)) || [])[2] || hash);
+    };
+    const rows = list.slice().reverse().map((f) =>
+      `<li><bdi>${esc(time(f.at))}</bdi> · <bdi>${(f.ms / 1000).toFixed(1)}</bdi> שניות · ${esc(where(f.page))}</li>`).join('');
+    return `<section class="card" id="freeze-card"><div class="card-title"><span class="ico ico-blue">🐢</span><h3>קפיאות שנרשמו בטלפון הזה</h3></div>
+      ${list.length ? `<ul class="freeze-list">${rows}</ul>
+        <div class="btn-row"><button class="btn" data-copy="${esc(JSON.stringify(list))}">📋 העתקה</button><button class="btn" data-diag-clear>🗑️ ניקוי</button></div>`
+      : '<p class="muted">עוד לא נרשמה קפיאה. כשהמסך נתקע לשנייה או יותר, היא תופיע כאן.</p>'}</section>`;
   }
 
   let membersLoaded = false;
@@ -249,7 +268,7 @@
   };
 
   document.addEventListener('click', async (e) => {
-    const t = e.target.closest('[data-install],[data-install-help],[data-dismiss],[data-push],[data-copy],[data-check],[data-done],[data-show-hotel],[data-close],[data-font],[data-signin],[data-signout],[data-admin-save],[data-fx],[data-list-edit],[data-list-more],[data-list-add],[data-list-del],[data-member-add],[data-member-del],[data-member-confirm],[data-print],.arrow.off');
+    const t = e.target.closest('[data-install],[data-install-help],[data-dismiss],[data-push],[data-copy],[data-check],[data-done],[data-show-hotel],[data-close],[data-font],[data-signin],[data-signout],[data-admin-save],[data-fx],[data-list-edit],[data-list-more],[data-list-add],[data-list-del],[data-member-add],[data-member-del],[data-member-confirm],[data-print],[data-diag-clear],.arrow.off');
     if (!t) return;
     if (t.matches('.arrow.off')) { e.preventDefault(); return; }
     if (t.hasAttribute('data-fx')) {
@@ -283,6 +302,9 @@
       try { await navigator.clipboard.writeText(t.dataset.copy); t.innerHTML = App.iconize('✅ הועתק'); } catch (err) { t.textContent = t.dataset.copy; }
       clearTimeout(t.copyTimer);
       t.copyTimer = setTimeout(() => { t.innerHTML = t.dataset.label; }, 2000);
+    } else if (t.hasAttribute('data-diag-clear')) {
+      App.diag.clear();
+      document.getElementById('freeze-card').outerHTML = freezeCard();
     } else if (t.dataset.done) {
       e.preventDefault(); // the tick sits inside a card's fold header: don't open/close the card
       App.toggleDone(t.dataset.done); App.render();

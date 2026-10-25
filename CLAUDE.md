@@ -26,6 +26,7 @@ The repo is **public**: never commit personal trip data (bookings, phone numbers
 | --- | --- |
 | `js/config.js` | Public Firebase config, `tripId`, VAPID key, admin emails |
 | `js/util.js` | Dates, times, `esc()`, preview "now", Maps links, localStorage `store` |
+| `js/diag.js` | Freeze recorder: notes when the screen stops answering for 1s+ and what ran before it; on this phone only, shown and copied in the admin screen ("קפיאות שנרשמו") |
 | `js/shared.js` | Shared checklists and "עשינו" marks (Firestore `shared/state`, local copy offline) |
 | `js/backend.js` | Google sign-in, Firestore listeners, push registration, admin load/save |
 | `js/trip.js` | Questions about the data: phase, tonight's hotel, flights on a day, airport-by time |
