@@ -43,6 +43,7 @@
     sharedWatched = true;
     const { fsMod, db } = fb;
     fsMod.onSnapshot(fsMod.doc(db, 'trips', cfg.tripId, 'shared', 'state'), (snap) => {
+      App.diag.mark('update lists');
       if (snap.metadata.hasPendingWrites) return; // our own change, already shown
       App.setShared(snap.exists() ? snap.data() : {});
       // Don't redraw under someone typing a new list item.
@@ -93,6 +94,7 @@
       }
       const { authMod, fsMod, auth, db } = fb;
       authMod.onAuthStateChanged(auth, (user) => {
+        App.diag.mark('signed ' + (user ? 'in' : 'out'));
         if (!user) { App.user = null; App.showScreen('login'); return; }
         App.user = { email: user.email.toLowerCase(), name: user.displayName };
         const tripRef = fsMod.doc(db, 'trips', cfg.tripId);
@@ -102,6 +104,7 @@
             if (cfg.adminEmails && cfg.adminEmails.includes(App.user.email)) { App.role = 'admin'; App.showScreen('admin-empty'); } else App.showScreen('no-access');
             return;
           }
+          App.diag.mark('update trip' + (snap.metadata.fromCache ? ' (saved copy)' : ''));
           const d = snap.data();
           const role = (d.members || {})[App.user.email] || null;
           if (!role) { App.showScreen('no-access'); return; }
@@ -113,6 +116,7 @@
           if (err.code === 'permission-denied') App.showScreen('no-access');
         });
         fsMod.onSnapshot(fsMod.doc(db, 'trips', cfg.tripId, 'status', 'flights'), (snap) => {
+          App.diag.mark('update flight status');
           App.flightStatus = snap.exists() ? (snap.data().legs || {}) : {};
           if (App.trip) App.render();
         }, () => { /* no status yet */ });

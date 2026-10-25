@@ -430,3 +430,5 @@ body.scroll-down .fx-fab { transform: translateY(90px); opacity: 0; pointer-even
 .hero-emoji .ic { width: 2.6rem; height: 2.6rem; margin: 0 2px; }
 .fx-fab .ic { width: 30px; height: 30px; vertical-align: 0; }
 .btn-sos .ic { filter: brightness(0) invert(1); }
+.freeze-list { margin: 0 0 10px; padding-inline-start: 18px; }
+.freeze-list li { margin: 4px 0; }
