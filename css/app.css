@@ -73,6 +73,8 @@ small { font-size: .85rem; }
   width: 52px; height: 46px; border-radius: 14px; background: var(--card); box-shadow: var(--shadow);
   display: grid; place-items: center; font-size: 1.5rem; text-decoration: none; color: var(--teal); font-weight: 700;
 }
+.arrow-ico { width: 1.15em; height: 1.15em; fill: none; stroke: currentColor; stroke-width: 2.6; stroke-linecap: round; stroke-linejoin: round; }
+.arrow-ico.left { transform: scaleX(-1); }
 .day-nav .arrow.off { opacity: .25; pointer-events: none; }
 .today-btn {
   flex: 1; height: 46px; border-radius: 14px; background: var(--teal); color: #fff; text-decoration: none;

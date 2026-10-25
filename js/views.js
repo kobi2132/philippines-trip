@@ -244,6 +244,9 @@
 
   // ---------- screens ----------
 
+  // Drawn here, not typed: the font has no side arrows, so each phone drew its own, and the two came out different.
+  const navArrow = (dir) => `<svg class="arrow-ico ${dir}" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12h15M13 5l7 7-7 7"/></svg>`;
+
   const dayNav = (date) => {
     const T = App.trip;
     const first = App.addDays(T.start, -1), last = T.end;
@@ -251,11 +254,11 @@
     const next = date < last ? App.addDays(date, 1) : null;
     return `
     <nav class="day-nav">
-      <a class="arrow ${prev ? '' : 'off'}" href="${prev ? '#/day/' + prev : '#'}" aria-label="יום קודם">→</a>
+      <a class="arrow ${prev ? '' : 'off'}" href="${prev ? '#/day/' + prev : '#'}" aria-label="יום קודם">${navArrow('right')}</a>
       ${date === App.today()
         ? '<span class="today-btn is-today">היום 📍</span>'
         : '<a class="today-btn" href="#/today">↩️ חזרה להיום</a>'}
-      <a class="arrow ${next ? '' : 'off'}" href="${next ? '#/day/' + next : '#'}" aria-label="יום הבא">←</a>
+      <a class="arrow ${next ? '' : 'off'}" href="${next ? '#/day/' + next : '#'}" aria-label="יום הבא">${navArrow('left')}</a>
     </nav>`;
   };
 
