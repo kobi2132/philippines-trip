@@ -26,7 +26,7 @@ The repo is **public**: never commit personal trip data (bookings, phone numbers
 | --- | --- |
 | `js/config.js` | Public Firebase config, `tripId`, VAPID key, admin emails |
 | `js/util.js` | Dates, times, `esc()`, preview "now", Maps links, localStorage `store` |
-| `js/diag.js` | Freeze recorder: notes when the screen stops answering for 1s+ and what ran before it; on this phone only, shown and copied in the admin screen ("קפיאות שנרשמו") |
+| `js/diag.js` | Freeze recorder (temporary, to be removed once freezes stay gone): notes when the screen stops answering or drawing for 1s+ and what ran before it; on this phone only, shown and copied in the admin screen ("קפיאות שנרשמו") |
 | `js/shared.js` | Shared checklists and "עשינו" marks (Firestore `shared/state`, local copy offline) |
 | `js/backend.js` | Google sign-in, Firestore listeners, push registration, admin load/save |
 | `js/trip.js` | Questions about the data: phase, tonight's hotel, flights on a day, airport-by time |
@@ -70,6 +70,7 @@ The repo is **public**: never commit personal trip data (bookings, phone numbers
 
 ## UI rules
 
+- Never add `viewport-fit=cover` to the viewport meta (2026-10-25): in the installed app on Jacob's Samsung it made the screen stop drawing for 9-11 seconds at random (PR #51). A Chrome tab was fine.
 - Everything in Hebrew, `dir="rtl"`. Font Rubik. Colors are tokens on `:root` in `css/app.css`.
 - Audience is 60+: base font 16px, big tap targets, short text, one idea per card. The colored day header stays big on purpose (Jacob likes it).
 - Always pass user data through `App.esc()`. Wrap dates and numbers that sit inside Hebrew in `<bdi>` (`App.range()`), and keep Latin codes (flight numbers, bookings, phones) `dir="ltr"`, or they flip.
