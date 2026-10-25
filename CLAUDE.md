@@ -70,7 +70,7 @@ The repo is **public**: never commit personal trip data (bookings, phone numbers
 
 ## UI rules
 
-- Never add `viewport-fit=cover` to the viewport meta (2026-10-25): in the installed app on Jacob's Samsung it made the screen stop drawing for 9-11 seconds at random (PR #51). A Chrome tab was fine.
+- Never add `viewport-fit=cover` to the viewport meta (2026-10-25): in the installed app on Jacob's Samsung it made the screen stop drawing for 9-11 seconds at random (PR #51). A Chrome tab was fine. Pinch and double-tap zoom are off (Jacob, 2026-10-25); bigger text comes from the text-size buttons.
 - Everything in Hebrew, `dir="rtl"`. Font Rubik. Colors are tokens on `:root` in `css/app.css`.
 - Audience is 60+: base font 16px, big tap targets, short text, one idea per card. The colored day header stays big on purpose (Jacob likes it).
 - Always pass user data through `App.esc()`. Wrap dates and numbers that sit inside Hebrew in `<bdi>` (`App.range()`), and keep Latin codes (flight numbers, bookings, phones) `dir="ltr"`, or they flip.
