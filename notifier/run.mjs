@@ -4,7 +4,7 @@
 import { initializeApp, cert } from 'firebase-admin/app';
 import { getFirestore, FieldValue } from 'firebase-admin/firestore';
 import { getMessaging } from 'firebase-admin/messaging';
-import { dueReminders, legsToCheck, flightChangeAlert, landedAlert, dueTelegram, telegramReminders, telegramFlightText, telegramErrorText } from './schedule.mjs';
+import { dueReminders, legsToCheck, flightChangeAlert, landedAlert, dueTelegram, telegramReminders, telegramFlightText, telegramErrorText, scheduleChangeText, missingFlightText, schedKey } from './schedule.mjs';
 import { telegram, telegramOn } from './telegram.mjs';
 import { fetchLegStatus } from './flights.mjs';
 
@@ -68,7 +68,9 @@ if (process.env.TG_SAMPLES) {
   ];
   for (const a of alerts) await sample(telegramFlightText(leg, a));
   await sample(landedAlert(f.legs[f.legs.length - 1], { status: 'departed' }, { status: 'landed', arrLocal: '09:42' }));
-  await sample(telegramErrorText(leg, 'AeroDataBox 429 for FZ1550'));
+  await sample(scheduleChangeText(leg, null, { schedDep: leg.dep.replace(/T(\d\d):(\d\d)/, 'T$1:15'), schedArr: f.legs[0].arr.replace(/T(\d\d):(\d\d)/, 'T$1:25') }));
+  await sample(missingFlightText(leg, { status: 'scheduled' }));
+  await sample(telegramErrorText(leg, `AeroDataBox 429 for ${leg.flightNo}`));
   process.exit(0);
 }
 
@@ -104,7 +106,11 @@ if (apiKey) {
     lastChecked[key] = now.getTime();
     try {
       const s = await fetchLegStatus(leg, apiKey);
-      if (!s) continue;
+      if (!s) {
+        const gone = missingFlightText(leg, notified[key]);
+        if (gone && await telegram(gone)) { notified[key] = { ...notified[key], missing: true }; await saveState(); }
+        continue;
+      }
       live[key] = s;
       const alert = flightChangeAlert(leg, notified[key], s);
       if (alert) {
@@ -113,7 +119,10 @@ if (apiKey) {
       }
       const landed = landedAlert(leg, notified[key], s);
       if (landed) await telegram(landed);
-      notified[key] = { status: s.status, depLocal: s.depLocal, gate: s.gate };
+      const moved = scheduleChangeText(leg, notified[key], s);
+      // Kept as seen until Telegram takes it, so a failed send is tried again next check.
+      const sched = !moved || await telegram(moved) ? schedKey(s) : notified[key] && notified[key].sched;
+      notified[key] = { status: s.status, depLocal: s.depLocal, gate: s.gate, sched: sched || null };
       await saveState();
     } catch (e) {
       console.error(e.message);

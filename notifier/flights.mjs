@@ -1,5 +1,5 @@
 // Live flight status from AeroDataBox (RapidAPI). Returns the shape the app reads:
-// { status, depLocal, arrLocal, gate, terminal, updatedAt }
+// { status, depLocal, arrLocal, gate, terminal, arrTerminal, schedDep, schedArr, updatedAt }
 
 const STATUS = {
   Canceled: 'cancelled', CanceledUncertain: 'cancelled', Delayed: 'delayed',
@@ -10,6 +10,8 @@ const STATUS = {
 // "2026-11-06 10:40+02:00" → "10:40"
 const hm = (t) => (t && t.local ? t.local.slice(11, 16) : null);
 const minutes = (t) => (t && t.utc ? new Date(t.utc.replace(' ', 'T')).getTime() / 60000 : null);
+// "2026-11-05 06:00+04:00" → "2026-11-05T06:00+04:00": the airline's timetable time, without delays.
+const iso = (t) => (t && t.local ? t.local.replace(' ', 'T') : null);
 
 export function mapFlight(item) {
   const dep = item.departure || {}, arr = item.arrival || {};
@@ -23,6 +25,8 @@ export function mapFlight(item) {
     gate: dep.gate || null,
     terminal: dep.terminal || null,
     arrTerminal: arr.terminal || null,
+    schedDep: iso(dep.scheduledTime),
+    schedArr: iso(arr.scheduledTime),
     updatedAt: new Date().toISOString(),
   };
 }
