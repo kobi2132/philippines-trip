@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { plannedReminders, dueReminders, legsToCheck, flightChangeAlert, landedAlert, pollEvery, localParts, telegramReminders, dueTelegram } from './schedule.mjs';
+import { plannedReminders, dueReminders, legsToCheck, flightChangeAlert, landedAlert, pollEvery, localParts, telegramReminders, dueTelegram, scheduleChangeText, missingFlightText, schedKey } from './schedule.mjs';
 
 const leg = (no, dep, arr, from) => ({ flightNo: no, dep, arr, from: { code: from, city: from }, to: { city: 'Y' } });
 const trip = {
@@ -119,4 +119,24 @@ test('a flight-status service that keeps failing still stays within the monthly 
     for (const { key } of legsToCheck(trip, new Date(t), lastChecked, {})) { n++; lastChecked[key] = t; }
   }
   assert.ok(n < 150, `${n} checks`); // about 120; retrying every run would be thousands
+});
+
+test('telegram: timetable change from 5 minutes, departure or landing, once per new timetable', () => {
+  const l = trip.flights[1].legs[0]; // 12:00 → 13:00
+  const same = { schedDep: '2026-11-08T12:00+08:00', schedArr: '2026-11-08T13:04+08:00' };
+  assert.equal(scheduleChangeText(l, null, same), null);
+  const later = { schedDep: '2026-11-08T12:00+08:00', schedArr: '2026-11-08T13:10+08:00' };
+  const text = scheduleChangeText(l, null, later);
+  assert.match(text, /נחיתה: <b>13:10<\/b> \(במקום 13:00\)/);
+  assert.doesNotMatch(text, /המראה:/);
+  assert.equal(scheduleChangeText(l, { sched: schedKey(later) }, later), null);
+  assert.match(scheduleChangeText(l, { sched: schedKey(later) }, { schedDep: '2026-11-09T00:30+08:00', schedArr: '2026-11-09T01:30+08:00' }), /00:30 \(9\.11\)/);
+  assert.equal(scheduleChangeText(l, null, { status: 'scheduled' }), null);
+});
+
+test('telegram: a flight seen before that disappears, once', () => {
+  const l = trip.flights[1].legs[0];
+  assert.equal(missingFlightText(l, undefined), null); // never seen: not published yet
+  assert.match(missingFlightText(l, { status: 'scheduled' }), /לא נמצאת/);
+  assert.equal(missingFlightText(l, { status: 'scheduled', missing: true }), null);
 });

@@ -169,6 +169,29 @@ export function flightChangeAlert(leg, prev, next) {
   return null;
 }
 
+// The airline moved the timetable itself (not a delay on the day): for Jacob on Telegram, from 5 minutes,
+// departure or landing, against the times in the trip data. Once per new timetable (kept in notified.sched).
+export const schedKey = (next) => (next && next.schedDep ? `${next.schedDep}|${next.schedArr || ''}` : null);
+export function scheduleChangeText(leg, prev, next) {
+  const key = schedKey(next);
+  if (!key || (prev && prev.sched === key)) return null;
+  const moved = (now, was) => now && Math.abs(Date.parse(now) - Date.parse(was)) >= 5 * 60e3;
+  const dep = moved(next.schedDep, leg.dep), arr = moved(next.schedArr, leg.arr);
+  if (!dep && !arr) return null;
+  const when = (now, was) => localTime(now) + (now.slice(0, 10) !== was.slice(0, 10) ? ` (${shortDate(now.slice(0, 10))})` : '');
+  return lines('🗓️ שינוי בלוח הזמנים של הטיסה', [['טיסה', leg.flightNo], ['מסלול', legRoute(leg)], ['תאריך', shortDate(leg.dep.slice(0, 10))],
+    ['המראה', dep && `<b>${when(next.schedDep, leg.dep)}</b> (במקום ${localTime(leg.dep)})`],
+    ['נחיתה', arr && `<b>${when(next.schedArr, leg.arr)}</b> (במקום ${localTime(leg.arr)})`]]) + '\nכדאי לעדכן את השעות בנתוני האפליקציה.';
+}
+
+// A flight the service found before and no longer finds: usually removed from the timetable (cancelled ahead of time).
+// Once, until it is found again.
+export function missingFlightText(leg, prev) {
+  if (!prev || prev.missing) return null;
+  return lines('❓ הטיסה לא נמצאת יותר בלוח הזמנים', [['טיסה', leg.flightNo], ['מסלול', legRoute(leg)], ['תאריך', shortDate(leg.dep.slice(0, 10))]])
+    + '\nייתכן שהטיסה בוטלה או שמספר הטיסה שונה. כדאי לבדוק מול הסוכנת.';
+}
+
 // The same change, written for Jacob on Telegram.
 export function telegramFlightText(leg, a) {
   const base = [['טיסה', leg.flightNo], ['מסלול', legRoute(leg)]];
