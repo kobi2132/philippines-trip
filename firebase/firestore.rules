@@ -26,6 +26,12 @@ service cloud.firestore {
         allow write: if isAdmin() || canTick(tripId);
       }
 
+      // Boarding passes (screenshots): only the admin uploads; travelers see them, viewers don't.
+      match /passes/{doc} {
+        allow read: if isAdmin() || canTick(tripId);
+        allow write: if isAdmin();
+      }
+
       // Each person's own device data (e.g. notification tokens).
       match /devices/{deviceId} {
         allow read, write: if isAdmin() || (isMember(tripId) && request.auth.uid == deviceId);
