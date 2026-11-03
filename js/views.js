@@ -58,7 +58,7 @@
       <div class="ap-term">${ap.terminal ? `טרמינל ${esc(ap.terminal)}` : label}</div>
     </div>`;
 
-  const legBlock = (leg) => {
+  const legBlock = (leg, f, i) => {
     const s = App.legStatus(leg) || {};
     const nextDay = App.localDate(leg.arr) !== App.localDate(leg.dep);
     return `
@@ -81,6 +81,7 @@
         <div class="fact"><span>🎫 בורדינג</span><b>${s.boarding ? esc(s.boarding) : App.minusMinutes(s.depLocal || App.localTime(leg.dep), 45) + ' בערך'}</b></div>
         <div class="fact"><span>🔒 נסגר</span><b>${App.minusMinutes(s.depLocal || App.localTime(leg.dep), 20)} בערך</b></div>
       </div>
+      ${App.passButtons(f, i)}
       <a class="link-small" href="https://www.flightradar24.com/data/flights/${esc(leg.flightNo.toLowerCase())}" target="_blank" rel="noopener">📡 מעקב חי אחרי הטיסה</a>
     </div>`;
   };
@@ -100,7 +101,7 @@
   };
 
   const flightCard = (f, opts = {}) => {
-    const legs = f.legs.map(legBlock);
+    const legs = f.legs.map((l, i) => legBlock(l, f, i));
     const conn = f.connection ? `
       <div class="connection">
         <div class="conn-title">🔁 קונקשן ב${esc(f.connection.airport)} · ${esc(f.connection.duration)}</div>

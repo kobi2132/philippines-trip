@@ -51,6 +51,21 @@
     }, () => { sharedWatched = false; });
   }
 
+  // Boarding passes: travelers and admin only (the rules refuse the viewer).
+  let passesWatched = false;
+  function watchPasses() {
+    if (passesWatched || !(App.role === 'traveler' || App.role === 'admin')) return;
+    passesWatched = true;
+    const { fsMod, db } = fb;
+    fsMod.onSnapshot(fsMod.collection(db, 'trips', cfg.tripId, 'passes'), (snap) => {
+      App.diag.mark('update boarding passes');
+      const passes = {};
+      snap.forEach((d) => { passes[d.id] = d.data(); });
+      App.setPasses(passes);
+      App.render();
+    }, () => { passesWatched = false; });
+  }
+
   // The phone's push token can change (a Chrome update, cleared data) or be dropped by the notifier once it
   // stops working. Registering again on every start, quietly, keeps notifications arriving.
   async function registerPush() {
@@ -81,6 +96,7 @@
     async start() {
       // 1. Preview build: data baked into the page.
       if (window.TRIP_DATA) { useTrip(window.TRIP_DATA, 'traveler', 'embedded'); return; }
+      App.loadPassCopy();
 
       // 2. Show the last copy we had straight away (works with no signal).
       const cached = App.store.get(cacheKey(), null);
@@ -111,6 +127,7 @@
           App.store.set(cacheKey(), { trip: d.data, role, user: App.user });
           useTrip(d.data, role, 'live');
           watchShared();
+          watchPasses();
           refreshPush();
         }, (err) => {
           if (err.code === 'permission-denied') App.showScreen('no-access');
@@ -138,6 +155,7 @@
 
     async signOut() {
       localStorage.removeItem(cacheKey());
+      try { await caches.delete('boarding-passes'); } catch (e) { /* none */ }
       if (fb) await fb.authMod.signOut(fb.auth);
       location.hash = '#/today';
       location.reload();
@@ -155,6 +173,18 @@
       const { fsMod, db } = fb;
       await fsMod.setDoc(fsMod.doc(db, 'trips', cfg.tripId, 'shared', 'state'),
         { ...patch, updatedAt: fsMod.serverTimestamp(), by: App.user.email }, { merge: true });
+    },
+
+    // Admin only (enforced by Firestore rules): one boarding pass per flight leg and person.
+    async savePass(id, pass) {
+      if (!fb) { App.passes = { ...App.passes, [id]: pass }; return; } // preview build
+      const { fsMod, db } = fb;
+      await fsMod.setDoc(fsMod.doc(db, 'trips', cfg.tripId, 'passes', id), { ...pass, updatedAt: fsMod.serverTimestamp() });
+    },
+    async deletePass(id) {
+      if (!fb) { const { [id]: gone, ...rest } = App.passes; App.passes = rest; return; } // preview build
+      const { fsMod, db } = fb;
+      await fsMod.deleteDoc(fsMod.doc(db, 'trips', cfg.tripId, 'passes', id));
     },
 
     // Ask permission, get this phone's push token, and register it for the trip.

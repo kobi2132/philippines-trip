@@ -32,6 +32,7 @@ The repo is **public**: never commit personal trip data (bookings, phone numbers
 | `js/trip.js` | Questions about the data: phase, tonight's hotel, flights on a day, airport-by time |
 | `js/views.js` | All screens and cards (HTML strings) |
 | `js/main.js` | Router (`#/today`, `#/day/<date>`, `#/flights`, ...), tab bar, events, admin screen, weather |
+| `js/passes.js` | Boarding passes: admin uploads a screenshot per flight leg and person (in the flight card); travelers open it full screen; phone copy in Cache Storage `boarding-passes` |
 | `js/fx.js` | 💱 peso converter button and modal |
 | `js/install.js` | Install prompt (Android one tap, iPhone how-to) |
 | `js/map.js` | Route map (real coastlines) |
@@ -44,7 +45,7 @@ The repo is **public**: never commit personal trip data (bookings, phone numbers
 
 ### Firebase
 
-- Project `philippines-trip-8eb57`. Firestore: `trips/{tripId}` = `{ data, members: {email: role}, updatedAt }`; subcollections `status/flights` and `status/notifier` (written by the notifier), `shared/state` (checklists, done marks), `devices/{uid}` (push tokens).
+- Project `philippines-trip-8eb57`. Firestore: `trips/{tripId}` = `{ data, members: {email: role}, updatedAt }`; subcollections `status/flights` and `status/notifier` (written by the notifier), `shared/state` (checklists, done marks), `devices/{uid}` (push tokens), `passes/{flightId}-{legIndex}-{personIndex}` (boarding pass `{flight, leg, flightNo, person, img}`, img a JPEG data URL under 900KB; admin writes, travelers and admin read, viewer can't). Firebase Storage is not used (no longer free).
 - `shared/state` saves every change as its own field (`items.{list}.{itemId}` = `{done}`, `{deleted: true}` or a new `{text, order}`; `done.{attractionId}`), never a whole list, so two phones (one offline) never wipe each other. A list = the trip data's items (id `src:<text>`) plus those changes; an older whole-list copy in `lists.{list}` is still read as the base. Items added to `checklists` in `trip.json` join the parents' lists; items they deleted stay deleted.
 - `devices/{uid}` holds `tokens.{deviceId}` (one per phone or computer; older docs a single `token`). The app re-registers the token quietly on every start; the notifier sends to all of them and deletes dead ones.
 - Roles: `traveler` (view + tick lists), `viewer` (read only, sees "מצב צפייה"), `admin` (Jacob, everything). Rules enforce it; changing `firestore.rules` means Jacob must paste the new rules into the console, so say so in the PR summary.
