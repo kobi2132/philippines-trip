@@ -32,7 +32,7 @@ The repo is **public**: never commit personal trip data (bookings, phone numbers
 | `js/trip.js` | Questions about the data: phase, tonight's hotel, flights on a day, airport-by time |
 | `js/views.js` | All screens and cards (HTML strings) |
 | `js/main.js` | Router (`#/today`, `#/day/<date>`, `#/flights`, ...), tab bar, events, admin screen, weather |
-| `js/passes.js` | Boarding passes: admin uploads a screenshot per flight leg and person (in the flight card); travelers open it full screen; phone copy in Cache Storage `boarding-passes` |
+| `js/passes.js` | Boarding passes: admin uploads a screenshot per flight leg and person (in the flight card); travelers open it full screen, with zoom on the pass only (pinch, double tap, buttons; the app itself stays unzoomable); phone copy in Cache Storage `boarding-passes` |
 | `js/fx.js` | 💱 peso converter button and modal |
 | `js/install.js` | Install prompt (Android one tap, iPhone how-to) |
 | `js/map.js` | Route map (real coastlines) |
