@@ -50,8 +50,9 @@
       <div class="modal-box pass-box" dir="rtl">
         <div class="pass-head"><b>🎫 <bdi dir="ltr">${esc(l.flightNo)}</bdi> ${esc(l.from.city || l.from.code)} ← ${esc(l.to.city || l.to.code)}</b><button class="pass-close" data-close aria-label="סגירה">✕</button></div>
         ${have.length > 1 ? `<div class="pass-tabs">${have.map((x, k) => `<button class="${x === p ? 'on' : ''}" data-pass-open="${esc(flightId)}" data-leg="${i}" data-person="${k}">${esc(x.person)}</button>`).join('')}</div>` : `<div class="pass-name">${esc(p.person)}</div>`}
-        <img class="pass-img" src="${p.img}" alt="כרטיס עלייה של ${esc(p.person)}">
-        <p class="muted pass-tip">בשער: מגבירים את בהירות המסך ומראים את הברקוד</p>
+        <div class="btn-row pass-zoom-btns"><button class="btn btn-nav" data-pass-zoom="in">+ הגדלה</button><button class="btn" data-pass-zoom="reset">גודל רגיל</button></div>
+        <div class="pass-zoom"><img class="pass-img" src="${p.img}" alt="כרטיס עלייה של ${esc(p.person)}" draggable="false"></div>
+        <p class="muted pass-tip">אפשר גם לצבוט בשתי אצבעות או להקיש פעמיים על הכרטיס. בשער: מגבירים את בהירות המסך ומראים את הברקוד.</p>
       </div>
     </div>`;
   };
@@ -103,7 +104,93 @@
     document.body.insertAdjacentHTML('beforeend', App.iconize(addModal(flightId, i)));
   };
 
+  // ---------- zoom on the pass only (the app itself has zoom turned off) ----------
+  // Pinch with two fingers, drag with one when zoomed, double-tap, or the two buttons.
+  const MAX = 5;
+  let z = null; // { box, img, s, x, y }
+  const clamp = (v, lo, hi) => Math.min(hi, Math.max(lo, v));
+  const apply = () => {
+    const w = z.box.clientWidth, h = z.box.clientHeight;
+    z.s = clamp(z.s, 1, MAX);
+    z.x = clamp(z.x, w - w * z.s, 0); z.y = clamp(z.y, h - h * z.s, 0);
+    z.img.style.transform = `translate(${z.x}px, ${z.y}px) scale(${z.s})`;
+    z.box.classList.toggle('zoomed', z.s > 1);
+  };
+  // Zoom to scale s keeping the point (px, py) inside the box where it is.
+  const zoomAt = (s, px, py) => {
+    const cx = (px - z.x) / z.s, cy = (py - z.y) / z.s;
+    z.s = clamp(s, 1, MAX); z.x = px - cx * z.s; z.y = py - cy * z.s; apply();
+  };
+  const zoomFor = (el) => {
+    const box = el.closest('.pass-modal')?.querySelector('.pass-zoom');
+    if (!box) return null;
+    if (!z || z.box !== box) z = { box, img: box.querySelector('img'), s: 1, x: 0, y: 0 };
+    return z;
+  };
+  // The middle of the part of the pass that is on screen (the pass can be taller than the screen).
+  const visibleMiddle = () => {
+    const r = z.box.getBoundingClientRect(), v = z.box.closest('.pass-box').getBoundingClientRect();
+    const top = Math.max(r.top, v.top), bottom = Math.min(r.bottom, v.bottom);
+    return [r.width / 2, (top + bottom) / 2 - r.top];
+  };
+
+  let touch = null, lastTap = null;
+  const pt = (t, r) => [t.clientX - r.left, t.clientY - r.top];
+  document.addEventListener('touchstart', (e) => {
+    const box = e.target.closest('.pass-zoom');
+    if (!box || !zoomFor(box)) return;
+    const r = box.getBoundingClientRect();
+    if (e.touches.length === 2) {
+      e.preventDefault();
+      const [a, b] = [pt(e.touches[0], r), pt(e.touches[1], r)];
+      touch = { pinch: true, d: Math.hypot(a[0] - b[0], a[1] - b[1]), m: [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2], s: z.s, x: z.x, y: z.y };
+    } else if (e.touches.length === 1) {
+      touch = { pinch: false, start: pt(e.touches[0], r), x: z.x, y: z.y, moved: false };
+    }
+  }, { passive: false });
+  document.addEventListener('touchmove', (e) => {
+    if (!touch || !z || !e.target.closest('.pass-zoom')) return;
+    const r = z.box.getBoundingClientRect();
+    if (touch.pinch && e.touches.length === 2) {
+      e.preventDefault();
+      const [a, b] = [pt(e.touches[0], r), pt(e.touches[1], r)];
+      const d = Math.hypot(a[0] - b[0], a[1] - b[1]), m = [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2];
+      const s = clamp(touch.s * d / touch.d, 1, MAX);
+      // The point that was under the fingers stays under them.
+      const cx = (touch.m[0] - touch.x) / touch.s, cy = (touch.m[1] - touch.y) / touch.s;
+      z.s = s; z.x = m[0] - cx * s; z.y = m[1] - cy * s; apply();
+    } else if (!touch.pinch && e.touches.length === 1) {
+      const p = pt(e.touches[0], r);
+      if (Math.hypot(p[0] - touch.start[0], p[1] - touch.start[1]) > 10) touch.moved = true;
+      if (z.s > 1) { e.preventDefault(); z.x = touch.x + p[0] - touch.start[0]; z.y = touch.y + p[1] - touch.start[1]; apply(); }
+    }
+  }, { passive: false });
+  document.addEventListener('touchend', (e) => {
+    if (!touch || !z) return;
+    if (!touch.pinch && !touch.moved && e.touches.length === 0) {
+      const now = Date.now(), p = touch.start;
+      if (lastTap && now - lastTap.t < 350 && Math.hypot(p[0] - lastTap.p[0], p[1] - lastTap.p[1]) < 40) {
+        e.preventDefault(); // no click after a double tap
+        if (z.s > 1) { z.s = 1; apply(); } else zoomAt(2.5, p[0], p[1]);
+        lastTap = null;
+      } else lastTap = { t: now, p };
+    }
+    if (e.touches.length === 0) touch = null;
+  }, { passive: false });
+  // Computer: double click.
+  document.addEventListener('dblclick', (e) => {
+    const box = e.target.closest('.pass-zoom');
+    if (!box || !zoomFor(box)) return;
+    const r = box.getBoundingClientRect();
+    if (z.s > 1) { z.s = 1; apply(); } else zoomAt(2.5, e.clientX - r.left, e.clientY - r.top);
+  });
+
   document.addEventListener('click', async (e) => {
+    const zb = e.target.closest('[data-pass-zoom]');
+    if (zb && zoomFor(zb)) {
+      if (zb.dataset.passZoom === 'in') { const [px, py] = visibleMiddle(); zoomAt(z.s * 1.6, px, py); } else { z.s = 1; apply(); }
+      return;
+    }
     const t = e.target.closest('[data-pass-open],[data-pass-add],[data-pass-del]');
     if (!t) return;
     e.preventDefault();
