@@ -346,6 +346,7 @@ body:has(#update-bar) .fx-fab, body:has(.modal) .fx-fab { display: none; }
 .fx-box p.muted { margin: 4px 0 8px; }
 .fx-table td { padding: 6px 4px; border-top: 1px solid var(--line); text-align: right; }
 .fx-table td:last-child { text-align: left; }
+.fx-table td:nth-child(2) { text-align: center; }
 .fx-field input::-webkit-inner-spin-button, .fx-field input::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
 
 /* clearer flight summary */
