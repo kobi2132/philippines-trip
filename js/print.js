@@ -74,7 +74,7 @@
       I.insurance && I.insurance.company ? ['🛡️ ביטוח', `${esc(I.insurance.company)} · פוליסה ${ltr(I.insurance.policy)}${I.insurance.phone ? ` · ${ltr(I.insurance.phone)}` : ''}`] : null,
       T.contact && T.contact.name ? ['👤 איש קשר', `${esc(T.contact.name)}${T.contact.whatsapp ? ` · ${ltr(T.contact.whatsapp)}` : ''}`] : null,
       ['🕐 שעון', esc(I.timeDiff)],
-      ['💵 כסף', `${esc(I.currency.name)} · 100 פזו ≈ ${Math.round(100 * I.currency.approxIls)} ₪`],
+      ['💵 כסף', `${esc(I.currency.name)} · 100 פזו ≈ ${Math.round(100 * I.currency.approxIls)} ₪ ≈ ${Math.round(100 * (I.currency.approxUsd || 0.017) * 10) / 10} $`],
       ['🔌 חשמל', esc(I.plug)],
     ].filter(Boolean);
     return section('📌 חשוב לדעת', `<table class="p-kv">${rows.map(([k, v]) => `<tr><th>${k}</th><td>${v}</td></tr>`).join('')}</table>`);
